@@ -53,7 +53,7 @@ LR = 0.0001
 net = MyNet(N, HID)
 net = net.double()
 
-net.load('saves/n10_single_one.dat')
+# net.load('saves/n10_single_one.dat')
 
 # Czy obliczenia mają być na GPU
 if device == 'cuda':
@@ -68,7 +68,7 @@ if device == 'cuda':
 # output = output1
 # sample.extend(sample0)
 # output.extend(output0)
-sample, output = get_patterns(10, 0.6, n_samples=N_SAMPLES)
+sample, output = get_patterns(10, 0.2, n_samples=N_SAMPLES)
 
 # zamiana próbek na tensory (możliwa kopia do pamięci GPU)
 t_sample = tensor(sample, dtype=dtype, device=device)

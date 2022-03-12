@@ -1,6 +1,6 @@
 from random import random
 
-from ptorch.helpers import log
+from helpers import log
 
 
 def get_1():
