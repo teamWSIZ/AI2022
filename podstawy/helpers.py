@@ -9,6 +9,11 @@ def format_list(l: list[float]) -> str:
     return res
 
 
+def to_str(w):
+    """Convert a list of int's to one string"""
+    return ''.join([str(k) for k in w])
+
+
 def format_list_int(l: list[int]) -> str:
     return format_list([float(x) for x in l])
 

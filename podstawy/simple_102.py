@@ -44,11 +44,12 @@ class MyNet(nn.Module):
 dtype = torch.double
 device = 'cpu'  # gdzie wykonywać obliczenia
 # device = 'cuda'
-N_IN = 8  # ile liczb wchodzi (długość listy)
-HID = 7  # ile neuronów w warstwie ukrytej
-N_OUT = 1
+N_IN = 10  # ile liczb wchodzi (długość listy)
+HID = 18  # ile neuronów w warstwie ukrytej
+MASKS = ['111', '000', '101']
+N_OUT = len(MASKS) + 1  # ostatnia to przypadek, gdy żadnej maski nie wykryto
 N_SAMPLES = 5000  # liczba próbek treningowych
-probability1 = 0.20
+probability1 = 0.35
 
 BATCH_SIZE = 500  # liczba próbek losowych
 EPOCHS = 3000
@@ -58,14 +59,16 @@ LR = 0.003
 net = MyNet(N_IN, HID, N_OUT)
 net = net.double()
 
-# net.load('saves/n10_single_one.dat')
+net.load('saves/n10_single_one.dat')
 
 # Czy obliczenia mają być na GPU
 if device == 'cuda':
     net = net.cuda()  # cała sieć kopiowana na GPU
 
 # ↓↓ to są listy pythona
-sample, output = get_patterns_single_1(N_IN, probability1, n_samples=N_SAMPLES)
+# sample, output = get_patterns_single_1(N, probability1, n_samples=N_SAMPLES)
+# sample, output = get_patterns_for_mask(N, probability1, n_samples=N_SAMPLES, mask='111')
+sample, output = get_patterns_multimask(N_IN, probability1, n_samples=N_SAMPLES, masks=MASKS)
 
 # zamiana próbek na torch.tensor (możliwa kopia do pamięci GPU)
 t_sample = tensor(sample, dtype=dtype, device=device)
