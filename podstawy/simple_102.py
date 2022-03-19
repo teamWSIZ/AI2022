@@ -53,7 +53,7 @@ probability1 = 0.35
 
 BATCH_SIZE = 500  # liczba próbek losowych
 EPOCHS = 3000
-LR = 0.003
+LR = 0.01
 
 # Net creation
 net = MyNet(N_IN, HID, N_OUT)

@@ -45,14 +45,14 @@ dtype = torch.double
 device = 'cpu'  # gdzie wykonywać obliczenia
 # device = 'cuda'
 N_IN = 8  # ile liczb wchodzi (długość listy)
-HID = 7  # ile neuronów w warstwie ukrytej
+HID = 4  # ile neuronów w warstwie ukrytej
 N_OUT = 1
-N_SAMPLES = 5000  # liczba próbek treningowych
+N_SAMPLES = 2000  # liczba próbek treningowych
 probability1 = 0.20
 
-BATCH_SIZE = 500  # liczba próbek losowych
+BATCH_SIZE = 200  # liczba próbek losowych
 EPOCHS = 3000
-LR = 0.003
+LR = 0.01
 
 # Net creation
 net = MyNet(N_IN, HID, N_OUT)
@@ -82,7 +82,7 @@ optimizer = optim.SGD(net.parameters(), lr=LR, momentum=0.9)  # będzie na GPU, 
 
 # Training
 print('starting training...')
-sleep(0.5)
+# sleep(0.5)
 epo_ = []
 err_ = []
 for epoch in range(EPOCHS):
