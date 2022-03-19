@@ -55,7 +55,7 @@ def get_patterns_multimask(list_len: int, probability: float, n_samples: int, ma
 
 
 if __name__ == '__main__':
-    ll, ou = get_patterns_single_1(4, 0.20, 50)
-    # ll, ou = get_patterns_multimask(14, 0.25, 15, ['111', '000', '101'])
+    # ll, ou = get_patterns_single_1(4, 0.20, 50)
+    ll, ou = get_patterns_multimask(14, 0.20, 15, ['1111', '0000', '1010'])
     for s, ou in zip(ll, ou):
         print(f'sample: {s} output/label:{ou}')

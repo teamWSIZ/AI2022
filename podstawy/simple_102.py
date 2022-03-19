@@ -44,12 +44,12 @@ class MyNet(nn.Module):
 dtype = torch.double
 device = 'cpu'  # gdzie wykonywać obliczenia
 # device = 'cuda'
-N_IN = 10  # ile liczb wchodzi (długość listy)
-HID = 18  # ile neuronów w warstwie ukrytej
-MASKS = ['111', '000', '101']
+N_IN = 16  # ile liczb wchodzi (długość listy)
+HID = 256  # ile neuronów w warstwie ukrytej
+MASKS = ['111', '000', '101','00000']
 N_OUT = len(MASKS) + 1  # ostatnia to przypadek, gdy żadnej maski nie wykryto
 N_SAMPLES = 5000  # liczba próbek treningowych
-probability1 = 0.35
+probability1 = 0.20
 
 BATCH_SIZE = 500  # liczba próbek losowych
 EPOCHS = 3000
@@ -59,7 +59,8 @@ LR = 0.01
 net = MyNet(N_IN, HID, N_OUT)
 net = net.double()
 
-net.load('saves/n10_single_one.dat')
+# UWAGA!! Przy zmianie rozmiarów sieci nie można wczytywać stanu poprzedniej ↓↓.
+# net.load('saves/n10_single_one.dat')
 
 # Czy obliczenia mają być na GPU
 if device == 'cuda':

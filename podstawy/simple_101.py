@@ -45,7 +45,7 @@ dtype = torch.double
 device = 'cpu'  # gdzie wykonywać obliczenia
 # device = 'cuda'
 N_IN = 8  # ile liczb wchodzi (długość listy)
-HID = 10  # ile neuronów w warstwie ukrytej
+HID = 2  # ile neuronów w warstwie ukrytej
 N_OUT = 1
 N_SAMPLES = 2000  # liczba próbek treningowych
 probability1 = 0.20
@@ -59,7 +59,7 @@ net = MyNet(N_IN, HID, N_OUT)
 net = net.double()
 
 # odkomentowac jesli chcemy wczytac siec nauczona poprzednio
-net.load('saves/n10_single_one.dat')
+# net.load('saves/n10_single_one.dat')
 
 # Czy obliczenia mają być na GPU
 if device == 'cuda':
