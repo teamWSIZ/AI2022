@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from torch import Tensor
+
 
 def format_list(l: list[float]) -> str:
     res = '['
@@ -8,6 +10,11 @@ def format_list(l: list[float]) -> str:
     res += ']'
     return res
 
+def format_t(t: Tensor, n_few = 4):
+    s = ''
+    for i in range(n_few):
+        s += format_list(t[i].tolist()) + ','
+    return s[:-1]
 
 def to_str(w):
     """Convert a list of int's to one string"""
