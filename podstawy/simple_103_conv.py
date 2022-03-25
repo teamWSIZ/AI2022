@@ -1,7 +1,7 @@
 from time import sleep
 
 from torch import nn, optim, tensor, Tensor
-import torch.nn.functional as funct
+import torch.nn.functional as F
 
 import matplotlib.pyplot as plt
 
@@ -10,33 +10,35 @@ from data_gen_1 import *
 from torch_helpers import *
 
 
-class ConvNet(nn.Module):
-    def __init__(self, n_in, hid, n_out, dropout_rate: float = 0.0):
+class MyNet(nn.Module):
+    """
+        Simple NN: input(N_IN) ---> flat(hid) ---> output (N_OUT)
+    """
+
+    def __init__(self, n_in, hid, n_out, ch1, dropout_rate: float = 0.0):
         super().__init__()
         self.dropout_rate = dropout_rate
         self.hid = hid
         self.n_in = n_in
+        self.n_out = n_out
+        self.ch1 = ch1
+        self.conv1 = nn.Conv1d(in_channels=1, out_channels=ch1, kernel_size=5, padding=2)  # pozostawia rozmiar n_in
 
-        # alternative: deep network: 4 hidden layers of 5 neurons each
-        self.num_hidden_layers = 1
-        self.size_hidden_layer = 10
-        self.flat_in_h = nn.Linear(n_in, self.size_hidden_layer, True)
-        # ↓↓ nie może być zwykła lista pythona, bo źle wtedy działa konwersja parametrów i zapis
-        self.hh = nn.ModuleList(
-            [nn.Linear(self.size_hidden_layer, self.size_hidden_layer, True) for _ in range(self.num_hidden_layers)])
-        self.flat_h_out = nn.Linear(self.size_hidden_layer, n_out, True)
+        self.flat_in_h = nn.Linear(n_in * ch1, hid, True)
+        self.flat_h_out = nn.Linear(hid, n_out, True)
 
     def forward(self, x):
         """ Main function for evaluation of input """
         if self.dropout_rate > 0:
             # niektóre pozycje próbek będą losowo zerowane
             x = nn.Dropout(self.dropout_rate)(x)
-        x = x.view(-1, self.n_in)
+        x = x.view(-1, 1, self.n_in)  # (batch, channel, position)
 
-        x = funct.relu(self.flat_in_h(x))
-        for i in range(self.num_hidden_layers):
-            x = funct.relu(self.hh[i](x))
-        x = funct.relu(self.flat_h_out(x))
+        x = F.relu(self.conv1(x))
+        x = x.view(-1, self.ch1 * self.n_in)  # 3 kanały (z conv1) * wielkość; reszta to batch
+
+        x = F.relu(self.flat_in_h(x))
+        x = F.relu(self.flat_h_out(x))
         return x
 
     def load(self, filename):
@@ -46,33 +48,34 @@ class ConvNet(nn.Module):
     def save(self, filename):
         torch.save(self.state_dict(), filename)
 
-
+# TYP DANYCH I CPU/GPU
 dtype = torch.double
 device = 'cpu'  # gdzie wykonywać obliczenia
 # device = 'cuda'
+
+# GEOMETRIA SIECI
 N_IN = 10  # ile liczb wchodzi (długość listy)
-HID = 128  # ile neuronów w warstwie ukrytej
+HID = 4  # ile neuronów w warstwie ukrytej
+CH1 = 3  # ile kanałów po przejściu warstwy konwolucyjnej 1
 # MASKS = ['111', '000', '101', '11011']
 MASKS = ['111', '000']
 N_OUT = len(MASKS) + 1  # ostatnia to przypadek, gdy żadnej maski nie wykryto
 N_SAMPLES = 10000  # liczba próbek treningowych
 
+# PROCES UCZENIA SIECI
 EPOCHS = 2000
 REGENERATE_SAMPLES_EPOCHS = 800  # co tyle epok generujemy próbki treningowe na nowo
 RESHUFFLE_EPOCHS = 500
-BATCH_SIZE = 500
+BATCH_SIZE = 1000
 LR = 0.005
 MOMENTUM = 0.9
-LOAD = False
 
 # Net creation
-net = ConvNet(N_IN, HID, N_OUT, dropout_rate=0.00)
+net = MyNet(N_IN, HID, N_OUT, CH1, dropout_rate=0.05)
 net = net.double()
 
 # fixme: UWAGA!! Przy zmianie rozmiarów sieci nie można wczytywać stanu poprzedniej ↓↓.
-if LOAD:
-    net.load('saves/n10_single_one.dat')
-
+# net.load('saves/n10_single_one.dat')
 
 if device == 'cuda':
     net = net.cuda()  # cała sieć kopiowana na GPU
