@@ -10,7 +10,7 @@ from data_gen_1 import *
 from torch_helpers import *
 
 
-class ConvNet(nn.Module):
+class MyNet(nn.Module):
     def __init__(self, n_in, hid, n_out, dropout_rate: float = 0.0):
         super().__init__()
         self.dropout_rate = dropout_rate
@@ -18,8 +18,8 @@ class ConvNet(nn.Module):
         self.n_in = n_in
 
         # alternative: deep network: 4 hidden layers of 5 neurons each
-        self.num_hidden_layers = 1
-        self.size_hidden_layer = 10
+        self.num_hidden_layers = 3  #todo: ważne parametry sieci!!!!
+        self.size_hidden_layer = 5
         self.flat_in_h = nn.Linear(n_in, self.size_hidden_layer, True)
         # ↓↓ nie może być zwykła lista pythona, bo źle wtedy działa konwersja parametrów i zapis
         self.hh = nn.ModuleList(
@@ -59,20 +59,20 @@ N_SAMPLES = 10000  # liczba próbek treningowych
 
 EPOCHS = 2000
 REGENERATE_SAMPLES_EPOCHS = 800  # co tyle epok generujemy próbki treningowe na nowo
-RESHUFFLE_EPOCHS = 500
+RESHUFFLE_EPOCHS = 100
 BATCH_SIZE = 500
-LR = 0.005
+LR = 0.005  # learning rate -- jak dużo zmieniać wagi sieci co "BATCH_SIZE" próbek
 MOMENTUM = 0.9
 LOAD = False
+# LOAD = True
 
 # Net creation
-net = ConvNet(N_IN, HID, N_OUT, dropout_rate=0.00)
+net = MyNet(N_IN, HID, N_OUT, dropout_rate=0.00)
 net = net.double()
 
 # fixme: UWAGA!! Przy zmianie rozmiarów sieci nie można wczytywać stanu poprzedniej ↓↓.
 if LOAD:
     net.load('saves/n10_single_one.dat')
-
 
 if device == 'cuda':
     net = net.cuda()  # cała sieć kopiowana na GPU

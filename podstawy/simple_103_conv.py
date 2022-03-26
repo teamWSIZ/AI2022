@@ -10,7 +10,7 @@ from data_gen_1 import *
 from torch_helpers import *
 
 
-class MyNet(nn.Module):
+class ConvNet(nn.Module):
     """
         Simple NN: input(N_IN) ---> flat(hid) ---> output (N_OUT)
     """
@@ -71,7 +71,7 @@ LR = 0.005
 MOMENTUM = 0.9
 
 # Net creation
-net = MyNet(N_IN, HID, N_OUT, CH1, dropout_rate=0.05)
+net = ConvNet(N_IN, HID, N_OUT, CH1, dropout_rate=0.05)
 net = net.double()
 
 # fixme: UWAGA!! Przy zmianie rozmiarów sieci nie można wczytywać stanu poprzedniej ↓↓.
