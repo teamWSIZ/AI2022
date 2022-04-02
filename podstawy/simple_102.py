@@ -17,14 +17,15 @@ class MyNet(nn.Module):
         self.hid = hid
         self.n_in = n_in
 
-        # alternative: deep network: 4 hidden layers of 5 neurons each
-        self.num_hidden_layers = 3  #todo: ważne parametry sieci!!!!
-        self.size_hidden_layer = 5
-        self.flat_in_h = nn.Linear(n_in, self.size_hidden_layer, True)
+        # alternative: deep network
+        self.num_hidden_layers = 3
+        self.number_neurons_hidden_layer = 8
+
+        self.flat_in_h = nn.Linear(n_in, self.number_neurons_hidden_layer, True)
         # ↓↓ nie może być zwykła lista pythona, bo źle wtedy działa konwersja parametrów i zapis
         self.hh = nn.ModuleList(
-            [nn.Linear(self.size_hidden_layer, self.size_hidden_layer, True) for _ in range(self.num_hidden_layers)])
-        self.flat_h_out = nn.Linear(self.size_hidden_layer, n_out, True)
+            [nn.Linear(self.number_neurons_hidden_layer, self.number_neurons_hidden_layer, True) for _ in range(self.num_hidden_layers)])
+        self.flat_h_out = nn.Linear(self.number_neurons_hidden_layer, n_out, True)
 
     def forward(self, x):
         """ Main function for evaluation of input """
@@ -50,21 +51,21 @@ class MyNet(nn.Module):
 dtype = torch.double
 device = 'cpu'  # gdzie wykonywać obliczenia
 # device = 'cuda'
-N_IN = 10  # ile liczb wchodzi (długość listy)
+N_IN = 20  # ile liczb wchodzi (długość listy)
 HID = 128  # ile neuronów w warstwie ukrytej
 # MASKS = ['111', '000', '101', '11011']
-MASKS = ['111', '000']
+MASKS = ['0001', '0011', '1010', '1110']
 N_OUT = len(MASKS) + 1  # ostatnia to przypadek, gdy żadnej maski nie wykryto
 N_SAMPLES = 10000  # liczba próbek treningowych
 
 EPOCHS = 2000
-REGENERATE_SAMPLES_EPOCHS = 800  # co tyle epok generujemy próbki treningowe na nowo
-RESHUFFLE_EPOCHS = 100
+REGENERATE_SAMPLES_EPOCHS = 200  # co tyle epok generujemy próbki treningowe na nowo
+RESHUFFLE_EPOCHS = 50
 BATCH_SIZE = 500
-LR = 0.005  # learning rate -- jak dużo zmieniać wagi sieci co "BATCH_SIZE" próbek
+LR = 0.01  # learning rate -- jak dużo zmieniać wagi sieci co "BATCH_SIZE" próbek
 MOMENTUM = 0.9
 LOAD = False
-# LOAD = True
+LOAD = True
 
 # Net creation
 net = MyNet(N_IN, HID, N_OUT, dropout_rate=0.00)

@@ -15,17 +15,18 @@ class ConvNet(nn.Module):
         Simple NN: input(N_IN) ---> flat(hid) ---> output (N_OUT)
     """
 
-    def __init__(self, n_in, hid, n_out, ch1, dropout_rate: float = 0.0):
+    def __init__(self, n_in, n_out, dropout_rate: float = 0.0):
         super().__init__()
         self.dropout_rate = dropout_rate
-        self.hid = hid
         self.n_in = n_in
         self.n_out = n_out
-        self.ch1 = ch1
-        self.conv1 = nn.Conv1d(in_channels=1, out_channels=ch1, kernel_size=5, padding=2)  # pozostawia rozmiar n_in
-
-        self.flat_in_h = nn.Linear(n_in * ch1, hid, True)
-        self.flat_h_out = nn.Linear(hid, n_out, True)
+        self.ch1 = 5
+        self.hid = 10
+        self.conv1 = nn.Conv1d(in_channels=1, out_channels=self.ch1, kernel_size=5,
+                               padding=2)  # pozostawia rozmiar n_in
+        self.flat_in_h = nn.Linear(n_in * self.ch1, self.hid, True)
+        self.flat_h_h = nn.Linear(self.hid, self.hid, True)
+        self.flat_h_out = nn.Linear(self.hid, n_out, True)
 
     def forward(self, x):
         """ Main function for evaluation of input """
@@ -38,6 +39,7 @@ class ConvNet(nn.Module):
         x = x.view(-1, self.ch1 * self.n_in)  # 3 kanały (z conv1) * wielkość; reszta to batch
 
         x = F.relu(self.flat_in_h(x))
+        x = F.relu(self.flat_h_h(x))
         x = F.relu(self.flat_h_out(x))
         return x
 
@@ -48,34 +50,32 @@ class ConvNet(nn.Module):
     def save(self, filename):
         torch.save(self.state_dict(), filename)
 
+
 # TYP DANYCH I CPU/GPU
 dtype = torch.double
-device = 'cpu'  # gdzie wykonywać obliczenia
-# device = 'cuda'
+# device = 'cpu'  # gdzie wykonywać obliczenia
+device = 'cuda'
 
 # GEOMETRIA SIECI
 N_IN = 10  # ile liczb wchodzi (długość listy)
-HID = 4  # ile neuronów w warstwie ukrytej
-CH1 = 3  # ile kanałów po przejściu warstwy konwolucyjnej 1
-# MASKS = ['111', '000', '101', '11011']
-MASKS = ['111', '000']
+MASKS = ['0001', '0011', '1010', '1110', '0101', '1100', '1001']
 N_OUT = len(MASKS) + 1  # ostatnia to przypadek, gdy żadnej maski nie wykryto
 N_SAMPLES = 10000  # liczba próbek treningowych
 
 # PROCES UCZENIA SIECI
-EPOCHS = 2000
+EPOCHS = 10000
 REGENERATE_SAMPLES_EPOCHS = 800  # co tyle epok generujemy próbki treningowe na nowo
 RESHUFFLE_EPOCHS = 500
 BATCH_SIZE = 1000
-LR = 0.005
+LR = 0.02
 MOMENTUM = 0.9
 
 # Net creation
-net = ConvNet(N_IN, HID, N_OUT, CH1, dropout_rate=0.05)
+net = ConvNet(N_IN, N_OUT, dropout_rate=0.00)
 net = net.double()
 
 # fixme: UWAGA!! Przy zmianie rozmiarów sieci nie można wczytywać stanu poprzedniej ↓↓.
-# net.load('saves/n10_single_one.dat')
+net.load('saves/n10_single_one.dat')
 
 if device == 'cuda':
     net = net.cuda()  # cała sieć kopiowana na GPU
