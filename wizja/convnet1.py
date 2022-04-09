@@ -39,13 +39,10 @@ class ConvNet(nn.Module):
 
     def forward(self, x):
         x = x.view(-1, 3, self.res, self.res)
-        y = x.copy()
         x = self.pool1(F.relu(self.conv1(x)))
         x = self.pool2(F.relu(self.conv2(x)))
 
         x = x.view(-1, self.flat_input_size)  # wypłaszczenie sygnału
-
-        z = torch.cat((x, y), 0)
 
         x = F.relu(self.flat_in_h(x))
         x = F.relu(self.flat_h_h(x))

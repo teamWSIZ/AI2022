@@ -79,4 +79,4 @@ def generate_sample(img_count, directory_name, res):
 
 
 if __name__ == '__main__':
-    generate_sample(6, 'tcells', 128)
+    generate_sample(50, 'tcells', res=128)
