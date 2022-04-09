@@ -62,8 +62,8 @@ class ConvNet(nn.Module):
 
 # TYP DANYCH I CPU/GPU
 dtype = torch.double
-# device = 'cpu'  # gdzie wykonywać obliczenia
-device = 'cuda'
+device = 'cpu'  # gdzie wykonywać obliczenia
+# device = 'cuda'
 
 # GEOMETRIA SIECI
 RES = 128
