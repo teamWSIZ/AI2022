@@ -12,8 +12,8 @@ from convnet_model import ConvNet
 
 # TYP DANYCH I CPU/GPU
 dtype = torch.double
-# device = 'cpu'  # gdzie wykonywać obliczenia
-device = 'cuda'
+device = 'cpu'  # gdzie wykonywać obliczenia
+# device = 'cuda'
 
 # GEOMETRIA SIECI
 RES = 128
@@ -37,7 +37,7 @@ if device == 'cuda':
 
 
 # fixme: UWAGA!! Przy zmianie rozmiarów sieci nie można wczytywać stanu poprzedniej ↓↓.
-net.load('saved_net_state.dat')
+# net.load('saved_net_state.dat')
 
 
 def generate_sample_tensors() -> tuple[Tensor, Tensor]:
