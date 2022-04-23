@@ -1,66 +1,19 @@
 from time import sleep
 
+import matplotlib.pyplot as plt
 import torch
 from torch import nn, optim, tensor, Tensor
-import torch.nn.functional as F
 
-import matplotlib.pyplot as plt
 
-# from helpers import format_t
-# from data_gen_1 import *
-# from torch_helpers import *
 from podstawy.torch_helpers import shuffle_samples_and_outputs
-from wizja.generation.g1 import generate_sample
-
-
-class ConvNet(nn.Module):
-    """
-        Simple NN: input(N_IN) ---> flat(hid) ---> output (N_OUT)
-    """
-
-    def __init__(self, res, n_out):
-        super().__init__()
-        self.res = res
-        self.n_out = n_out
-        self.ch1 = 5
-        self.hid = 10
-
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=3, kernel_size=5, padding=2)  # pozostawia RES x RES
-        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)  # RES → RES/2 (64 → 32)
-        self.conv2 = nn.Conv2d(in_channels=3, out_channels=9, kernel_size=5, padding=2)  # pozostawia RES x RES
-        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)  # RES → RES/4 (32 → 16)
-
-        flat_size = 9 * (res // 4) ** 2  # 9 kanałów, RES/4 x RES/4
-        self.flat_input_size = flat_size
-
-        self.flat_in_h = nn.Linear(flat_size, self.hid, True)
-        self.flat_h_h = nn.Linear(self.hid, self.hid, True)
-        self.flat_h_out = nn.Linear(self.hid, n_out, True)
-
-    def forward(self, x):
-        x = x.view(-1, 3, self.res, self.res)
-        x = self.pool1(F.relu(self.conv1(x)))
-        x = self.pool2(F.relu(self.conv2(x)))
-
-        x = x.view(-1, self.flat_input_size)  # wypłaszczenie sygnału
-
-        x = F.relu(self.flat_in_h(x))
-        x = F.relu(self.flat_h_h(x))
-        x = F.relu(self.flat_h_out(x))
-        return x
-
-    def load(self, filename):
-        self.load_state_dict(torch.load(filename))
-        self.eval()
-
-    def save(self, filename):
-        torch.save(self.state_dict(), filename)
+from wizja.samples.g1 import generate_sample
+from convnet_model import ConvNet
 
 
 # TYP DANYCH I CPU/GPU
 dtype = torch.double
-device = 'cpu'  # gdzie wykonywać obliczenia
-# device = 'cuda'
+# device = 'cpu'  # gdzie wykonywać obliczenia
+device = 'cuda'
 
 # GEOMETRIA SIECI
 RES = 128
@@ -84,16 +37,17 @@ if device == 'cuda':
 
 
 # fixme: UWAGA!! Przy zmianie rozmiarów sieci nie można wczytywać stanu poprzedniej ↓↓.
-# net.load('saved_net_state.dat')
+net.load('saved_net_state.dat')
 
 
 def generate_sample_tensors() -> tuple[Tensor, Tensor]:
     # ↓↓ to są listy pythona
-    samples_tcells = generate_sample(N_SAMPLES, 'generation/tcells', RES)
+    samples_tcells = generate_sample(N_SAMPLES, 'samples/oak', RES)
     n_tcells = len(samples_tcells)
     outputs_tcells = [(1, 0) for _ in range(n_tcells)]
     n_bacter = n_tcells
-    samples_bacter = generate_sample(n_bacter, 'generation/bacteria', RES)
+    samples_bacter = generate_sample(n_bacter, 'samples/maple', RES)
+    n_bacter = len(samples_bacter)
     outputs_bacter = [(0, 1) for _ in range(n_bacter)]
 
     sample = torch.cat((samples_tcells, samples_bacter), 0)

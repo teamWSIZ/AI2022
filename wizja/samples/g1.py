@@ -50,7 +50,7 @@ def generate_transform(resolution=256):
     tts = [TS.Resize((resolution, resolution)),
            TS.RandomAffine(degrees=10, fill=(0, 0, 0), translate=(0.1, 0.1), scale=(0.5, 1.5), shear=(0, 0.2)),
            TS.GaussianBlur(kernel_size=3),
-           TS.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=(-0.2,0.2)),
+           TS.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=(-0.2, 0.2)),
            TS.ToTensor()]
 
     return TS.Compose(tts)
@@ -58,7 +58,7 @@ def generate_transform(resolution=256):
 
 def generate_sample(img_count, directory_name, res):
     """
-    :return: Tensor typu [80, 3, 128, 128], i.e. nr. obrazka, nr koloru, rząd, kolumna
+    :return:
 
     Uwaga: liczba obrazków zawsze jest wielokrotnością liczby obrazków w folderze z których są pobierane.
     """
@@ -78,5 +78,29 @@ def generate_sample(img_count, directory_name, res):
     return res
 
 
+def generate_for_check(directory_name, resolution=256):
+    """
+    Wczytuje obrazki z danego źródła i dostosowuje je (przez crop) do wybranej rozdzielczości.
+    :param resolution: obrazki będą docięte do kwadratów res x res
+    :param directory_name: źródło obrazków
+    :return: Tensor typu [80, 3, 128, 128], i.e. nr. obrazka, nr koloru, rząd, kolumna
+    """
+    dataset = datasets.ImageFolder(directory_name,
+                                   transform=TS.Compose([TS.Resize((resolution, resolution)), TS.ToTensor()]))
+    # tts = [TS.functional.crop()]    # fixme: use crop in TS.Compose
+    data_loader = DataLoader(dataset, batch_size=10, shuffle=False)
+    res = None
+    for (images, classes) in data_loader:
+        if res is None:
+            res = images
+        else:
+            res = torch.cat((res,images), 0)
+        # for i in images:
+        #     F.to_pil_image(i).show()
+    return res
+
+
+
 if __name__ == '__main__':
-    generate_sample(50, 'tcells', res=128)
+    # generate_sample(5, 'maple', res=128)
+    generate_for_check('tcells')
