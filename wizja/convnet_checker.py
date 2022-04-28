@@ -24,9 +24,9 @@ if device == 'cuda':
 net.load('saved_net_state.dat')
 
 
-def generate_sample_tensors() -> tuple[Tensor, Tensor]:
+def generate_sample_tensors(sample_dir: str) -> tuple[Tensor, Tensor]:
     # ↓↓ to są listy pythona
-    samples = generate_for_check('samples/oak_test', RES)
+    samples = generate_for_check(sample_dir, RES)
     if dtype == torch.double:
         samples = samples.double()
     if device == 'cuda':
@@ -34,18 +34,15 @@ def generate_sample_tensors() -> tuple[Tensor, Tensor]:
     return samples
 
 
-# Dane do wykresu ↓
-epo_ = []
-err_ = []
+SAMPLE_DIR = 'samples/carback_test'
+EXPECTED_POSITION = 1
+ALLOWED_ERROR = 0.30
 
-t_samples = generate_sample_tensors()
+t_samples = generate_sample_tensors(SAMPLE_DIR)
 
-total_loss = tensor(0., device=device)
 prediction = net(t_samples)
 results = prediction.detach().cpu().numpy()  # [ [0,1], [0,1], ...]
 
-ALLOWED_ERROR = 0.05
-EXPECTED_POSITION = 0
 
 correct = 0
 print(results)

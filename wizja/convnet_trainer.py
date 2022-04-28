@@ -12,8 +12,8 @@ from convnet_model import ConvNet
 
 # TYP DANYCH I CPU/GPU
 dtype = torch.double
-device = 'cpu'  # gdzie wykonywać obliczenia
-# device = 'cuda'
+# device = 'cpu'  # gdzie wykonywać obliczenia
+device = 'cuda'
 
 # GEOMETRIA SIECI
 RES = 128
@@ -21,8 +21,8 @@ N_OUT = 2
 N_SAMPLES = 30  # liczba próbek treningowych z każdego typu
 
 # PROCES UCZENIA SIECI
-EPOCHS = 500
-REGENERATE_SAMPLES_EPOCHS = 150  # co tyle epok generujemy próbki treningowe na nowo
+EPOCHS = 200
+REGENERATE_SAMPLES_EPOCHS = 90  # co tyle epok generujemy próbki treningowe na nowo
 RESHUFFLE_EPOCHS = 45
 BATCH_SIZE = 1000
 LR = 0.02
@@ -37,30 +37,26 @@ if device == 'cuda':
 
 
 # fixme: UWAGA!! Przy zmianie rozmiarów sieci nie można wczytywać stanu poprzedniej ↓↓.
-# net.load('saved_net_state.dat')
+net.load('saved_net_state.dat')
 
 
 def generate_sample_tensors() -> tuple[Tensor, Tensor]:
     # ↓↓ to są listy pythona
-    samples_tcells = generate_sample(N_SAMPLES, 'samples/oak', RES)
-    n_tcells = len(samples_tcells)
-    outputs_tcells = [(1, 0) for _ in range(n_tcells)]
-    n_bacter = n_tcells
-    samples_bacter = generate_sample(n_bacter, 'samples/maple', RES)
-    n_bacter = len(samples_bacter)
-    outputs_bacter = [(0, 1) for _ in range(n_bacter)]
+    samples_type1 = generate_sample(N_SAMPLES, 'samples/carfront', RES)
+    n_1 = len(samples_type1)
+    outputs_type1 = [(1, 0) for _ in range(n_1)]
+    n_2 = n_1
+    samples_type2 = generate_sample(n_2, 'samples/carback', RES)
+    n_2 = len(samples_type2)
+    outputs_type2 = [(0, 1) for _ in range(n_2)]
 
-    sample = torch.cat((samples_tcells, samples_bacter), 0)
-    output = torch.cat((torch.tensor(outputs_tcells, dtype=dtype, device=device),
-                        torch.tensor(outputs_bacter, dtype=dtype, device=device)), 0)
+    sample = torch.cat((samples_type1, samples_type2), 0)
+    output = torch.cat((torch.tensor(outputs_type1, dtype=dtype, device=device),
+                        torch.tensor(outputs_type2, dtype=dtype, device=device)), 0)
     if dtype == torch.double:
         sample = sample.double()
     if device == 'cuda':
         sample = sample.cuda()
-
-    # zamiana próbek na torch.tensor (możliwa kopia do pamięci GPU)
-    # t_sample_ = tensor(sample, dtype=dtype, device=device)
-    # t_output_ = tensor(output, dtype=dtype, device=device)
 
     return sample, output
 

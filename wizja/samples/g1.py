@@ -48,22 +48,22 @@ def generate_transform(resolution=256):
     """
     # podstawowe transformacje
     tts = [TS.Resize((resolution, resolution)),
-           TS.RandomAffine(degrees=10, fill=(0, 0, 0), translate=(0.1, 0.1), scale=(0.5, 1.5), shear=(0, 0.2)),
+           TS.RandomAffine(degrees=10, fill=(0, 0, 0), translate=(0.1, 0.1), scale=(0.9, 1.1), shear=(0, 0.2)),
            TS.GaussianBlur(kernel_size=3),
-           TS.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=(-0.2, 0.2)),
+           TS.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.2, hue=(-0.1, 0.1)),
            TS.ToTensor()]
 
     return TS.Compose(tts)
 
 
-def generate_sample(img_count, directory_name, res):
+def generate_sample(img_count, image_dir, res):
     """
     :return:
 
     Uwaga: liczba obrazków zawsze jest wielokrotnością liczby obrazków w folderze z których są pobierane.
     """
     t = generate_transform(resolution=res)
-    dataset = datasets.ImageFolder(directory_name, transform=t)
+    dataset = datasets.ImageFolder(image_dir, transform=t)
     dataloader = DataLoader(dataset, batch_size=15, shuffle=True)  # adjust to number of pictures
     res = None
     while res is None or res.size()[0] < img_count:
@@ -102,5 +102,5 @@ def generate_for_check(directory_name, resolution=256):
 
 
 if __name__ == '__main__':
-    # generate_sample(5, 'maple', res=128)
-    generate_for_check('tcells')
+    generate_sample(5, 'maple', res=128)
+    # generate_for_check('tcells')
