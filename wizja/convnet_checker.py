@@ -11,7 +11,7 @@ device = 'cuda'
 
 # GEOMETRIA SIECI
 RES = 64
-N_OUT = 3
+N_OUT = 2
 
 # Net creation
 net = ConvNet(RES, n_out=N_OUT)
@@ -35,7 +35,7 @@ def generate_sample_tensors(sample_dir: str, n_classes=2) -> tuple[Tensor, Tenso
     return samples_, outputs_
 
 
-SAMPLE_DIR = 'samples/cars_test'
+SAMPLE_DIR = 'samples/leaves_test'
 EXPECTED_POSITION = 1
 ALLOWED_ERROR = 0.30
 

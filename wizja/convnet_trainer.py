@@ -15,11 +15,11 @@ device = 'cuda'
 
 # GEOMETRIA SIECI
 RES = 64
-N_OUT = 3
+N_OUT = 2
 N_SAMPLES = 30  # liczba próbek treningowych z każdego typu
 
 # PROCES UCZENIA SIECI
-EPOCHS = 20000
+EPOCHS = 4000
 REGENERATE_SAMPLES_EPOCHS = 190  # co tyle epok generujemy próbki treningowe na nowo
 RESHUFFLE_EPOCHS = 45
 BATCH_SIZE = 1000
@@ -35,11 +35,11 @@ if device == 'cuda':
 
 
 # fixme: UWAGA!! Przy zmianie rozmiarów sieci nie można wczytywać stanu poprzedniej ↓↓.
-net.load('saved_net_state.dat')
+# net.load('saved_net_state.dat')
 
 
 def generate_sample_tensors() -> tuple[Tensor, Tensor]:
-    samples, outputs = generate_sample(N_SAMPLES, 'samples/cars', RES, n_classes=N_OUT)
+    samples, outputs = generate_sample(N_SAMPLES, 'samples/leaves', RES, n_classes=N_OUT)
     if dtype == torch.double:
         samples = samples.double()
         outputs = outputs.double()
