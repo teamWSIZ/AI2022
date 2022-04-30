@@ -14,12 +14,12 @@ dtype = torch.double
 device = 'cuda'
 
 # GEOMETRIA SIECI
-RES = 64
-N_OUT = 2
+RES = 32
+N_OUT = 3
 N_SAMPLES = 30  # liczba próbek treningowych z każdego typu
 
 # PROCES UCZENIA SIECI
-EPOCHS = 4000
+EPOCHS = 3000
 REGENERATE_SAMPLES_EPOCHS = 190  # co tyle epok generujemy próbki treningowe na nowo
 RESHUFFLE_EPOCHS = 45
 BATCH_SIZE = 1000

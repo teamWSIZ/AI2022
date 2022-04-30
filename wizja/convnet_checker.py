@@ -11,7 +11,7 @@ device = 'cuda'
 
 # GEOMETRIA SIECI
 RES = 64
-N_OUT = 2
+N_OUT = 3
 
 # Net creation
 net = ConvNet(RES, n_out=N_OUT)
