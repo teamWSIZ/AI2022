@@ -4,11 +4,9 @@ import matplotlib.pyplot as plt
 import torch
 from torch import nn, optim, tensor, Tensor
 
-
 from podstawy.torch_helpers import shuffle_samples_and_outputs
-from wizja.samples.g1 import generate_sample
+from wizja.samples.generator_of_samples import generate_sample
 from convnet_model import ConvNet
-
 
 # TYP DANYCH I CPU/GPU
 dtype = torch.double
@@ -16,13 +14,13 @@ dtype = torch.double
 device = 'cuda'
 
 # GEOMETRIA SIECI
-RES = 128
-N_OUT = 2
+RES = 64
+N_OUT = 3
 N_SAMPLES = 30  # liczba próbek treningowych z każdego typu
 
 # PROCES UCZENIA SIECI
-EPOCHS = 200
-REGENERATE_SAMPLES_EPOCHS = 90  # co tyle epok generujemy próbki treningowe na nowo
+EPOCHS = 20000
+REGENERATE_SAMPLES_EPOCHS = 190  # co tyle epok generujemy próbki treningowe na nowo
 RESHUFFLE_EPOCHS = 45
 BATCH_SIZE = 1000
 LR = 0.02
@@ -41,24 +39,14 @@ net.load('saved_net_state.dat')
 
 
 def generate_sample_tensors() -> tuple[Tensor, Tensor]:
-    # ↓↓ to są listy pythona
-    samples_type1 = generate_sample(N_SAMPLES, 'samples/carfront', RES)
-    n_1 = len(samples_type1)
-    outputs_type1 = [(1, 0) for _ in range(n_1)]
-    n_2 = n_1
-    samples_type2 = generate_sample(n_2, 'samples/carback', RES)
-    n_2 = len(samples_type2)
-    outputs_type2 = [(0, 1) for _ in range(n_2)]
-
-    sample = torch.cat((samples_type1, samples_type2), 0)
-    output = torch.cat((torch.tensor(outputs_type1, dtype=dtype, device=device),
-                        torch.tensor(outputs_type2, dtype=dtype, device=device)), 0)
+    samples, outputs = generate_sample(N_SAMPLES, 'samples/cars', RES, n_classes=N_OUT)
     if dtype == torch.double:
-        sample = sample.double()
+        samples = samples.double()
+        outputs = outputs.double()
     if device == 'cuda':
-        sample = sample.cuda()
-
-    return sample, output
+        samples = samples.cuda()
+        outputs = outputs.cuda()
+    return samples, outputs
 
 
 def split_to_batches(samples: Tensor, outputs: Tensor) -> tuple[list, list]:
@@ -79,6 +67,8 @@ err_ = []
 
 t_sample, t_output = generate_sample_tensors()
 b_sample, b_output = split_to_batches(t_sample, t_output)
+print(t_sample.shape)
+print(t_output.shape)
 
 for epoch in range(EPOCHS):
     total_loss = tensor(0., device=device)

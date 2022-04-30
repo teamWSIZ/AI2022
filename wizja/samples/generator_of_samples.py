@@ -2,9 +2,18 @@ from random import randint
 
 import torch
 from PIL import Image, ImageEnhance
+from torch import tensor
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms as TS
 import torchvision.transforms.functional as F
+
+
+def convert_index_to_bin_tensor(t: tensor, n_classes):
+    """
+    [1,2,0] -> [[0,1,0],[0,0,1],[1,0,0]]
+    """
+    w = [[1. if i.data == k else 0. for k in range(n_classes)] for i in t]
+    return tensor(w)
 
 
 class SuperposeSign(object):
@@ -56,51 +65,52 @@ def generate_transform(resolution=256):
     return TS.Compose(tts)
 
 
-def generate_sample(img_count, image_dir, res):
+def generate_sample(n_samples, image_dir, res, n_classes=2) -> tuple[tensor, tensor]:
     """
-    :return:
-
-    Uwaga: liczba obrazków zawsze jest wielokrotnością liczby obrazków w folderze z których są pobierane.
+    dim = (batch,color,row,col)  dla tensora "samples" (return[0])
     """
     t = generate_transform(resolution=res)
     dataset = datasets.ImageFolder(image_dir, transform=t)
     dataloader = DataLoader(dataset, batch_size=15, shuffle=True)  # adjust to number of pictures
-    res = None
-    while res is None or res.size()[0] < img_count:
+    samples, outputs = None, None
+    while samples is None or samples.size()[0] < n_samples:
         for (images, classes) in dataloader:
-            # wizualne sprawdzanie wyników
-            # for i in images:
-            #     F.to_pil_image(i).show()
-            if res is None:
-                res = images
+            if samples is None:
+                samples = images
+                outputs = convert_index_to_bin_tensor(classes, n_classes)
             else:
-                res = torch.cat((res, images), 0)
-    return res
+                samples = torch.cat((samples, images), 0)
+                outputs = torch.cat((outputs, convert_index_to_bin_tensor(classes, n_classes)), 0)
+    return samples[:n_samples], outputs[:n_samples]
 
 
-def generate_for_check(directory_name, resolution=256):
+def generate_for_check(directory_name, resolution=256, n_classes=2):
     """
     Wczytuje obrazki z danego źródła i dostosowuje je (przez crop) do wybranej rozdzielczości.
     :param resolution: obrazki będą docięte do kwadratów res x res
     :param directory_name: źródło obrazków
+    :param n_classes: liczba klas obrazków - czyli ile jest podfolderów typu 0,1,2...
     :return: Tensor typu [80, 3, 128, 128], i.e. nr. obrazka, nr koloru, rząd, kolumna
     """
-    dataset = datasets.ImageFolder(directory_name,
-                                   transform=TS.Compose([TS.Resize((resolution, resolution)), TS.ToTensor()]))
+    dataset = datasets.ImageFolder(directory_name, TS.Compose([TS.Resize((resolution, resolution)), TS.ToTensor()]))
     # tts = [TS.functional.crop()]    # fixme: use crop in TS.Compose
     data_loader = DataLoader(dataset, batch_size=10, shuffle=False)
-    res = None
+    samples, outputs = None, None
     for (images, classes) in data_loader:
-        if res is None:
-            res = images
+        if samples is None:
+            samples = images
+            outputs = convert_index_to_bin_tensor(classes, n_classes)
         else:
-            res = torch.cat((res,images), 0)
+            samples = torch.cat((samples, images), 0)
+            outputs = torch.cat((outputs, convert_index_to_bin_tensor(classes, n_classes)), 0)
         # for i in images:
         #     F.to_pil_image(i).show()
-    return res
-
+    return samples, outputs
 
 
 if __name__ == '__main__':
-    generate_sample(5, 'maple', res=128)
-    # generate_for_check('tcells')
+    s, o = generate_sample(20, 'cars', res=128, n_classes=3)
+    # s, o = generate_for_check('tcells', resolution=128, n_classes=3)
+    print(s.shape)  # dim = (batch,color,row,col)
+    print(s.shape)
+    print(o)

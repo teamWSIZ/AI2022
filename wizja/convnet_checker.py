@@ -2,7 +2,7 @@ import torch
 from torch import tensor, Tensor
 
 from convnet_model import ConvNet
-from wizja.samples.g1 import generate_for_check
+from wizja.samples.generator_of_samples import generate_for_check
 
 # TYP DANYCH I CPU/GPU
 dtype = torch.double
@@ -10,8 +10,8 @@ dtype = torch.double
 device = 'cuda'
 
 # GEOMETRIA SIECI
-RES = 128
-N_OUT = 2
+RES = 64
+N_OUT = 3
 
 # Net creation
 net = ConvNet(RES, n_out=N_OUT)
@@ -24,29 +24,31 @@ if device == 'cuda':
 net.load('saved_net_state.dat')
 
 
-def generate_sample_tensors(sample_dir: str) -> tuple[Tensor, Tensor]:
-    # ↓↓ to są listy pythona
-    samples = generate_for_check(sample_dir, RES)
+def generate_sample_tensors(sample_dir: str, n_classes=2) -> tuple[Tensor, Tensor]:
+    samples_, outputs_ = generate_for_check(sample_dir, RES, n_classes)
     if dtype == torch.double:
-        samples = samples.double()
+        samples_ = samples_.double()
+        outputs_ = outputs_.double()
     if device == 'cuda':
-        samples = samples.cuda()
-    return samples
+        samples_ = samples_.cuda()
+        outputs_ = outputs_.cuda()
+    return samples_, outputs_
 
 
-SAMPLE_DIR = 'samples/carback_test'
+SAMPLE_DIR = 'samples/cars_test'
 EXPECTED_POSITION = 1
 ALLOWED_ERROR = 0.30
 
-t_samples = generate_sample_tensors(SAMPLE_DIR)
+samples, outputs = generate_sample_tensors(SAMPLE_DIR, N_OUT)
 
-prediction = net(t_samples)
+prediction = net(samples)
 results = prediction.detach().cpu().numpy()  # [ [0,1], [0,1], ...]
-
+outputs = outputs.detach().cpu().numpy()
 
 correct = 0
-print(results)
-for x in results:
-    correct += 1 if abs(x[EXPECTED_POSITION] - 1) < ALLOWED_ERROR else 0
+for x, e in zip(results, outputs):
+    ok = max(abs(x[pos] - e[pos]) for pos in range(len(x))) < ALLOWED_ERROR
+    correct += 1 if ok else 0
+    print(x, e, '\t', '✔' if ok else 'x')
 
 print(f'Poprawnie rozpoznanych próbek: {correct / len(results) * 100 :.0f}%')
