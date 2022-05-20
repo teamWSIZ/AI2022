@@ -60,7 +60,9 @@ def generate_transform(resolution=256):
            TS.RandomAffine(degrees=10, fill=(0, 0, 0), translate=(0.1, 0.1), scale=(0.9, 1.1), shear=(0, 0.2)),
            TS.GaussianBlur(kernel_size=3),
            TS.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.2, hue=(-0.1, 0.1)),
-           TS.ToTensor()]
+           TS.ToTensor(),
+           TS.Normalize([0.485, 0.456, 0.406],
+                        [0.229, 0.224, 0.225])]  # standardowy krok normalizacji każdego z kolorów
 
     return TS.Compose(tts)
 
@@ -92,7 +94,9 @@ def generate_for_check(directory_name, resolution=256, n_classes=2):
     :param n_classes: liczba klas obrazków - czyli ile jest podfolderów typu 0,1,2...
     :return: Tensor typu [80, 3, 128, 128], i.e. nr. obrazka, nr koloru, rząd, kolumna
     """
-    dataset = datasets.ImageFolder(directory_name, TS.Compose([TS.Resize((resolution, resolution)), TS.ToTensor()]))
+    dataset = datasets.ImageFolder(directory_name, TS.Compose(
+        [TS.Resize((resolution, resolution)), TS.ToTensor(), TS.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])]
+    ))
     # tts = [TS.functional.crop()]    # fixme: use crop in TS.Compose
     data_loader = DataLoader(dataset, batch_size=10, shuffle=False)
     samples, outputs = None, None

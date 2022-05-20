@@ -1,7 +1,9 @@
+import copy
 from time import sleep
 
 import matplotlib.pyplot as plt
 import torch
+import torchvision.models
 from torch import nn, optim, tensor, Tensor
 
 from podstawy.torch_helpers import shuffle_samples_and_outputs
@@ -9,37 +11,52 @@ from wizja.samples.generator_of_samples import generate_sample
 from convnet_model import ConvNet
 
 # TYP DANYCH I CPU/GPU
-dtype = torch.double
+dtype = torch.float
 # device = 'cpu'  # gdzie wykonywać obliczenia
 device = 'cuda'
 
-# GEOMETRIA SIECI
-RES = 24
-N_OUT = 3
-N_SAMPLES = 900  # liczba próbek treningowych z każdego typu
+# GEOMETRIA SIECI wg.
+# https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html#inception-v3
+#
+RES = 78
+N_OUT = 4  # == num_classes
+N_SAMPLES = 150  # liczba próbek treningowych z każdego typu
 
 # PROCES UCZENIA SIECI
-EPOCHS = 3000
-REGENERATE_SAMPLES_EPOCHS = 190  # co tyle epok generujemy próbki treningowe na nowo
-RESHUFFLE_EPOCHS = 45
-BATCH_SIZE = 1000
-LR = 0.02
+EPOCHS = 15000-1
+REGENERATE_SAMPLES_EPOCHS = 200  # co tyle epok generujemy próbki treningowe na nowo
+RESHUFFLE_EPOCHS = 10
+BATCH_SIZE = 50
+LR = 0.0002
 MOMENTUM = 0.9
 
 # Net creation
-net = ConvNet(RES, n_out=N_OUT)
-net = net.double()
+net = torchvision.models.inception_v3(pretrained=False, aux_logits=False)  # fixme: ←aux_logits=F jeśli chcemy RES<299
+net = net.float()
+
+# print(net)
+"""
+Ostatnie oryginalne warstwy Inception_v3 to: 
+  (avgpool): AdaptiveAvgPool2d(output_size=(1, 1))
+  (dropout): Dropout(p=0.5, inplace=False)
+  (fc): Linear(in_features=2048, out_features=1000, bias=True)
+  ↑↑ ostatnią trzeba dostosować, jak mamy 3 lub 4 klasy obrazków, a nie 1000 jak w ImageNet
+
+https://pytorch.org/tutorials/beginner/finetuning_torchvision_models_tutorial.html#inception-v3
+"""
+# fixme linia "print" ↑↑ jest potrzebna by odczytać te dwie stałe (zależne od rozdzielczości) ↓↓
+# net.AuxLogits.fc = nn.Linear(768, N_OUT)  #fixme: ←zakomentowane jeśli chcemy mieć RES<299
+net.fc = nn.Linear(2048, N_OUT)
+
+# fixme: UWAGA!! Przy zmianie rozmiarów sieci nie można wczytywać stanu poprzedniej ↓↓.
+net = torch.load('saved_inception_v3_eyes.dat')
 
 if device == 'cuda':
     net = net.cuda()  # cała sieć kopiowana na GPU
 
 
-# fixme: UWAGA!! Przy zmianie rozmiarów sieci nie można wczytywać stanu poprzedniej ↓↓.
-net.load('saved_net_state.dat')
-
-
 def generate_sample_tensors() -> tuple[Tensor, Tensor]:
-    samples, outputs = generate_sample(N_SAMPLES, 'samples/leaves', RES, n_classes=N_OUT)
+    samples, outputs = generate_sample(N_SAMPLES, 'samples/eyes', RES, n_classes=N_OUT)
     if dtype == torch.double:
         samples = samples.double()
         outputs = outputs.double()
@@ -67,24 +84,29 @@ err_ = []
 
 t_sample, t_output = generate_sample_tensors()
 b_sample, b_output = split_to_batches(t_sample, t_output)
-print(t_sample.shape)
-print(t_output.shape)
+print('samples dimensions:', t_sample.shape)
+print('outputs dimensions:', t_output.shape)
 
 for epoch in range(EPOCHS):
     total_loss = tensor(0., device=device)
+    n_batches = 0
     for (batch_s, batch_o) in zip(b_sample, b_output):
         optimizer.zero_grad()
-        prediction = net(batch_s)
-        loss = loss_function(prediction, batch_o)
+        evalued = net(batch_s)
+        # prediction, aux_prediction = evalued
+        loss = loss_function(evalued, batch_o)
 
         total_loss += loss
+        n_batches += 1
+
         loss.backward()
         optimizer.step()
+        # print(loss.item())
 
     # print(f'epoch={epoch}')
     # Dodatkowe operacje w trakcie procesu uczenia
-    if epoch % 10 == 9:
-        mean_error = total_loss.item() / len(b_sample)
+    if epoch % 3 == 1:
+        mean_error = total_loss.item() / n_batches
         print(f' epoch:{epoch}, loss:{mean_error:.6f}')
         epo_.append(epoch)
         err_.append(mean_error)
@@ -100,8 +122,9 @@ for epoch in range(EPOCHS):
         b_sample, b_output = split_to_batches(t_sample, t_output)
 
 # Optional result save
-net.save('saved_net_state.dat')
+torch.save(net, 'saved_inception_v3_eyes.dat')
 print('net saved')
+
 plt.scatter(epo_, err_)
 plt.xlabel('epoch')
 plt.ylabel('error')
