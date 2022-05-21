@@ -13,19 +13,19 @@ dtype = torch.double
 device = 'cpu'  # gdzie wykonywać obliczenia
 # device = 'cuda'
 
-HISTORY_N = 10  # ile liczb wchodzi (długość listy -- historii na podstawie której przewidujemy)
-HID = 8  # ile neuronów w warstwie ukrytej
+HISTORY_N = 30  # ile liczb wchodzi (długość listy -- historii na podstawie której przewidujemy)
+HID = 3  # ile neuronów w warstwie ukrytej
 
 # liczba próbek treningowych zwracających "1"
-N_SAMPLE = 1000  # liczba próbej treningowych zwracających "0"
-BATCH_SIZE = 250  # liczba próbek losowych
+N_SAMPLE = 10000  # liczba próbej treningowych zwracających "0"
+BATCH_SIZE = 2500  # liczba próbek losowych
 EPOCHS = 1500
-LR = 0.01
+LR = 0.1
 
 # Czy obliczenia mają być na GPU
 
 # Dane do uczenia sieci
-DX = 0.3
+DX = 0.01
 
 
 def generate_sample_tensors(model_function, n_samples, history_len, x_from, x_to, dx) -> tuple[Tensor, Tensor]:
@@ -93,15 +93,15 @@ def train(history_len, hidden_neurons, load_filename='', save_filename='save.dat
     print('net saved')
 
 
-def predict(max_x, history_len, hidden_neurons, saved_filename, model_function):
+def predict(max_x, dx, history_len, hidden_neurons, saved_filename, model_function):
     net = SequenceNet(history_len, hidden_neurons)
     net = net.double()
     if saved_filename != '':
         net.load(saved_filename)
 
-    history = [model_function(2 + i * DX) for i in range(HISTORY_N)]  # początkowa historia
+    history = [model_function(2 + i * dx) for i in range(HISTORY_N)]  # początkowa historia
     full = history.copy()
-    x = HISTORY_N * DX
+    x = HISTORY_N * dx
     while x < max_x:
         history_t = tensor([history], dtype=dtype, device=device)
         history_batch = torch.split(history_t, BATCH_SIZE)
@@ -112,7 +112,7 @@ def predict(max_x, history_len, hidden_neurons, saved_filename, model_function):
         full.append(val)
         history.append(val)
         history = history[1:]
-        x += DX
+        x += dx
 
     import matplotlib.pyplot as plt
     # plt.plot(history, linestyle='solid')
@@ -121,5 +121,6 @@ def predict(max_x, history_len, hidden_neurons, saved_filename, model_function):
 
 
 if __name__ == '__main__':
-    train(HISTORY_N, HID, '', 'save.dat', LR, device, function_to_teach=model_sinus)
-    # predict(max_x=4, history_len=HISTORY_N, hidden_neurons=HID, saved_filename='save.dat', model_function=model_sinus)
+    # train(HISTORY_N, HID, 'save.dat', 'save.dat', LR, device, function_to_teach=model_sinus)
+    predict(max_x=4, dx=DX, history_len=HISTORY_N, hidden_neurons=HID, saved_filename='save.dat',
+            model_function=model_sinus)
