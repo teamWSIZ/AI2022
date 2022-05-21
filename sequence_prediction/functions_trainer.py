@@ -6,67 +6,30 @@ from torch import nn, optim, tensor, Tensor
 import torch.nn.functional as funct
 
 from podstawy.helpers import format_list
-from sequence_prediction.functions_model import model_lorentz
+from sequence_prediction.functions_model import model_lorentz, SequenceNet, model_sinus
 from sequence_prediction.sample_generator import gen_samples
-
-
-class SequenceNet(nn.Module):
-    """
-        Simple NN: input(sz) ---> flat(hid) ---> 1
-    """
-
-    def __init__(self, sz, hid):
-        super().__init__()
-        self.hid = hid
-        self.sz = sz
-        self.flat1 = nn.Linear(sz, hid, True)
-        self.flat2 = nn.Linear(hid, 1, True)
-
-    def forward(self, x):
-        """ Main function for evaluation of input """
-        x = x.view(-1, self.sz)
-        # print(x.size())  # batchsize x self.sz
-        x = self.flat1(x)
-        # print(x.size())  # batchsize x self.hid
-        x = self.flat2(funct.relu(x))
-        return funct.relu(x)
-
-    def load(self, filename):
-        self.load_state_dict(torch.load(filename))
-        self.eval()
-
-    def save(self, filename):
-        torch.save(self.state_dict(), filename)
-
 
 dtype = torch.double
 device = 'cpu'  # gdzie wykonywać obliczenia
 # device = 'cuda'
-HISTORY_N = 10  # ile liczb wchodzi (długość listy)
-HID = 3  # ile neuronów w warstwie ukrytej
+
+HISTORY_N = 10  # ile liczb wchodzi (długość listy -- historii na podstawie której przewidujemy)
+HID = 8  # ile neuronów w warstwie ukrytej
 
 # liczba próbek treningowych zwracających "1"
-N_SAMPLE = 3000  # liczba próbej treningowych zwracających "0"
-BATCH_SIZE = 500  # liczba próbek losowych
-
-EPOCHS = 4000
-LR = 0.3
-
-# Net creation
-net = SequenceNet(HISTORY_N, HID)
-net = net.double()
-net.load('saves/one.dat')
+N_SAMPLE = 1000  # liczba próbej treningowych zwracających "0"
+BATCH_SIZE = 250  # liczba próbek losowych
+EPOCHS = 1500
+LR = 0.01
 
 # Czy obliczenia mają być na GPU
-if device == 'cuda':
-    net = net.cuda()  # cała sieć kopiowana na GPU
 
 # Dane do uczenia sieci
 DX = 0.3
 
 
 def generate_sample_tensors(model_function, n_samples, history_len, x_from, x_to, dx) -> tuple[Tensor, Tensor]:
-    sample, output = gen_samples(N_SAMPLE, HISTORY_N, model_lorentz, x_from, x_to, dx)
+    sample, output = gen_samples(n_samples, history_len, model_function, x_from, x_to, dx)
 
     # zamiana próbek na tensory (możliwa kopia do pamięci GPU)
     t_sample = tensor(sample, dtype=dtype, device=device)
@@ -85,12 +48,21 @@ def split_to_batches(samples: Tensor, outputs: Tensor, batch_size) -> tuple[list
     return torch.split(samples, batch_size), torch.split(outputs, batch_size)
 
 
-def train():
+def train(history_len, hidden_neurons, load_filename='', save_filename='save.dat', learning_rate=0.1, device='cpu',
+          function_to_teach=model_sinus):
+    # Create net, or load from a saved checkpoint
+    net = SequenceNet(history_len, hidden_neurons)
+    net = net.double()
+    if load_filename != '':
+        net.load(load_filename)
+    if device == 'cuda':
+        net = net.cuda()  # cała sieć kopiowana na GPU
+
     # Training setup
     loss_function = nn.MSELoss(reduction='mean')
-    optimizer = optim.SGD(net.parameters(), lr=LR, momentum=0.9)  # będzie na GPU, jeśli gpu=True
+    optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9)  # będzie na GPU, jeśli gpu=True
 
-    samples, outputs = generate_sample_tensors(model_lorentz, N_SAMPLE, HISTORY_N, 0, 2, 0.1)
+    samples, outputs = generate_sample_tensors(function_to_teach, N_SAMPLE, HISTORY_N, 0, 2, 0.1)
     b_sample, b_output = split_to_batches(samples, outputs, BATCH_SIZE)
 
     # Training
@@ -117,12 +89,17 @@ def train():
         if epoch % 20 == 0:
             print(f' epoch:{epoch}, loss:{total_loss:.6f}')
     # Optional result save
-    net.save('saves/one.dat')
+    net.save(save_filename)
     print('net saved')
 
 
-def predict(max_x):
-    history = [model_lorentz(2 + i * DX) for i in range(HISTORY_N)]  # początkowa historia
+def predict(max_x, history_len, hidden_neurons, saved_filename, model_function):
+    net = SequenceNet(history_len, hidden_neurons)
+    net = net.double()
+    if saved_filename != '':
+        net.load(saved_filename)
+
+    history = [model_function(2 + i * DX) for i in range(HISTORY_N)]  # początkowa historia
     full = history.copy()
     x = HISTORY_N * DX
     while x < max_x:
@@ -137,7 +114,6 @@ def predict(max_x):
         history = history[1:]
         x += DX
 
-
     import matplotlib.pyplot as plt
     # plt.plot(history, linestyle='solid')
     plt.plot(full, linestyle='dotted')
@@ -145,5 +121,5 @@ def predict(max_x):
 
 
 if __name__ == '__main__':
-    # train()
-    predict(10)
+    train(HISTORY_N, HID, '', 'save.dat', LR, device, function_to_teach=model_sinus)
+    # predict(max_x=4, history_len=HISTORY_N, hidden_neurons=HID, saved_filename='save.dat', model_function=model_sinus)
