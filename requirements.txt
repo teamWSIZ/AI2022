@@ -3,3 +3,6 @@ matplotlib
 Pillow > 9.0.1
 torchvision
 numpy
+
+#
+yfinance
