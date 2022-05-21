@@ -13,14 +13,14 @@ import yfinance as yf
 end = datetime.now()
 start = datetime(end.year, end.month-2, end.day)
 
-g = yf.download('NFLX', start, end)  # S&P500: ^GSPC, DAX: ^GDAXI, EURUSD=X, EURPLN=X
+g = yf.download('TSLA', start, end)  # S&P500: ^GSPC, DAX: ^GDAXI, EURUSD=X, EURPLN=X
 print(type(g))
 print(g)
 print(g['Close'])
-print(g['Close'].tolist())
-print(g.axes[0].tolist())
+print(g['Close'].tolist())  # lista cen zamknięcia
+print(g.axes[0].tolist())   # lista dat
 
-# g.to_csv('tesla.csv')
+g.to_csv('tesla.csv')
 
 
 """
