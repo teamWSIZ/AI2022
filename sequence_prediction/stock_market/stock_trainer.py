@@ -1,29 +1,31 @@
+from datetime import datetime
+
 import torch
 from torch import nn, optim, tensor, Tensor
 
 from podstawy.helpers import format_list
-from sequence_prediction.functions_model import SequenceNet, model_sinus, model_tanh
-from sequence_prediction.sample_generator import gen_samples
+from stock_model import *
+from yfinance_sample_gen import *
 
 dtype = torch.double
 device = 'cpu'  # gdzie wykonywać obliczenia
 # device = 'cuda'
 
-HISTORY_N = 40  # ile liczb wchodzi (długość listy -- historii na podstawie której przewidujemy)
+HISTORY_N = 100  # ile liczb wchodzi (długość listy -- historii na podstawie której przewidujemy)
 HID = 10  # ile neuronów w warstwie ukrytej
 
-# liczba próbek treningowych zwracających "1"
-N_SAMPLE = 10000  # liczba próbej treningowych zwracających "0"
+N_SAMPLE = 20000  # liczba próbek treningowych
 BATCH_SIZE = 2500  # liczba próbek losowych
-EPOCHS = 2000
+EPOCHS = 15300
 LR = 0.01
 
 # Dane do uczenia sieci
 DX = 0.01
 
 
-def generate_sample_tensors(x_from, x_to, dx, model_function, history_len, n_samples) -> tuple[Tensor, Tensor]:
-    sample, output = gen_samples(x_from, x_to, dx, model_function, history_len, n_samples)
+def generate_sample_tensors(date_from: datetime, date_to: datetime,
+                            history_len, n_samples, ticker) -> tuple[Tensor, Tensor]:
+    sample, output = get_samples(date_from, date_to, history_len, n_samples, ticker)
 
     # zamiana próbek na tensory (możliwa kopia do pamięci GPU)
     t_sample = tensor(sample, dtype=dtype, device=device)
@@ -42,10 +44,10 @@ def split_to_batches(samples: Tensor, outputs: Tensor, batch_size) -> tuple[list
     return torch.split(samples, batch_size), torch.split(outputs, batch_size)
 
 
-def train(x_from, x_to, dx, model_function, history_len, hidden_neurons, load_net: bool, save_filename: str,
-          learning_rate: float, device: str):
+def train(date_from: datetime, date_to: datetime, history_len, n_samples, ticker,
+          load_net=False, save_filename='save.dat', learning_rate=0.1, device='cpu'):
     # Create net, or load from a saved checkpoint
-    net = SequenceNet(history_len, hidden_neurons)
+    net = SequenceNet(history_len, HID)
     net = net.double()
     if load_net:
         net.load(save_filename)
@@ -56,7 +58,7 @@ def train(x_from, x_to, dx, model_function, history_len, hidden_neurons, load_ne
     loss_function = nn.MSELoss(reduction='mean')
     optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9)  # będzie na GPU, jeśli gpu=True
 
-    samples, outputs = generate_sample_tensors(x_from, x_to, dx, model_function, HISTORY_N, N_SAMPLE)
+    samples, outputs = generate_sample_tensors(date_from, date_to, history_len, n_samples, ticker)
     b_sample, b_output = split_to_batches(samples, outputs, BATCH_SIZE)
 
     # Training
@@ -64,42 +66,38 @@ def train(x_from, x_to, dx, model_function, history_len, hidden_neurons, load_ne
         total_loss = 0
         for (batch_s, batch_o) in zip(b_sample, b_output):
             optimizer.zero_grad()
-            # print(batch_in)
             prediction = net(batch_s)
             prediction = prediction.view(-1)  # size: [5,1] -> [5] (flat, same as b_out)
             loss = loss_function(prediction, batch_o)
-
-            # if EPOCHS - epoch < 2:
-            #     # pokazujemy wyniki dla ostatnich
-            #     print('---------')
-            #     print(f'input: {batch_s.tolist()}')
-            #     print(f'pred:{format_list(prediction.tolist())}')
-            #     print(f'outp:{format_list(batch_o.tolist())}')
-
             total_loss += loss
 
             loss.backward()
             optimizer.step()
         if epoch % 20 == 0:
             print(f' epoch:{epoch}, loss:{total_loss:.6f}')
+        if epoch % 300 == 300-1:
+            print('regenerating samples')
+            samples, outputs = generate_sample_tensors(date_from, date_to, history_len, n_samples, ticker)
+            b_sample, b_output = split_to_batches(samples, outputs, BATCH_SIZE)
+
     # Optional result save
     net.save(save_filename)
     print('net saved')
 
 
-def predict(x_from, x_to, dx, model_function, history_len, hidden_neurons, saved_filename):
-    net = SequenceNet(history_len, hidden_neurons)
+def predict(date_from: datetime, date_to: datetime, history_len, horizon, n_samples, ticker, saved_filename):
+    net = SequenceNet(history_len, HID)
     net = net.double()
-    if saved_filename != '':
-        net.load(saved_filename)
+    net.load(saved_filename)
 
-    history = [model_function(x_from + i * dx) for i in range(HISTORY_N)]  # początkowa historia
+    histories, next_values = get_samples(date_from, date_to, history_len + horizon, n_samples, ticker)
 
-    model_values = history.copy()
+    history = histories[0][:history_len]
+
+    model_values = histories[0]
     predi_values = history.copy()
 
-    x = x_from + HISTORY_N * dx
-    while x < x_to:
+    for _ in range(horizon):
         history_t = tensor([history], dtype=dtype, device=device)
         history_batch = torch.split(history_t, BATCH_SIZE)
         # print(history_batch)
@@ -107,11 +105,9 @@ def predict(x_from, x_to, dx, model_function, history_len, hidden_neurons, saved
         val = float(nxt[0][0])
 
         predi_values.append(val)
-        model_values.append(model_function(x))
 
         history.append(val)
         history = history[1:]
-        x += dx
 
     import matplotlib.pyplot as plt
     # plt.plot(history, linestyle='solid')
@@ -122,8 +118,11 @@ def predict(x_from, x_to, dx, model_function, history_len, hidden_neurons, saved
 
 
 if __name__ == '__main__':
-    train(x_from=-10, x_to=10, dx=DX, model_function=model_tanh, history_len=HISTORY_N, hidden_neurons=HID,
-          load_net=False, save_filename='save.dat', learning_rate=LR, device=device)
+    train_start = datetime(2007, 1, 1)
+    train_end = datetime(2020, 1, 1)
+    pred_start = datetime(2020, 1, 1)
+    pred_end = datetime(2022, 5, 1)
 
-    predict(x_from=-10, x_to=40, dx=DX, model_function=model_tanh, history_len=HISTORY_N, hidden_neurons=HID,
-            saved_filename='save.dat')
+    # train(train_start, train_end, HISTORY_N, N_SAMPLE, 'EURPLN=X', False, 'save.dat', LR, device)
+
+    predict(pred_start, pred_end, HISTORY_N, 30, 1, 'EURPLN=X', 'save.dat')

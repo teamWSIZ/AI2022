@@ -2,18 +2,7 @@ from math import sin, tanh
 from torch import nn, optim, tensor, Tensor
 import torch.nn.functional as funct
 import torch
-
-
-def model_sinus(x):
-    return 1 + sin(x)
-
-
-def model_lorentz(x):
-    return 1 / (1 + (x - 5) ** 2)
-
-
-def model_tanh(x):
-    return 1 + tanh(x * 0.2)
+from yfinance_sample_gen import *
 
 
 class SequenceNet(nn.Module):
@@ -48,12 +37,10 @@ class SequenceNet(nn.Module):
 if __name__ == '__main__':
     x = -10
     dx = 0.1
-    vals = []
-    while x < 10:
-        vals.append(model_tanh(x))
-        x += dx
+    vals, outp = get_samples(datetime(2021, 2, 1), datetime.now(),80, 1, 'AAPL')
 
     import matplotlib.pyplot as plt
-    plt.plot(vals, linestyle='solid')
+
+    plt.plot(vals[0], linestyle='solid')
 
     plt.show()

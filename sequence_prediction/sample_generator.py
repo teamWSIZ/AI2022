@@ -3,7 +3,8 @@ from random import random
 from sequence_prediction.functions_model import model_sinus
 
 
-def gen_samples(n_samples, history_len, model_function, x_from, x_to, dx) -> tuple[list, list]:
+
+def gen_samples(x_from, x_to, dx, model_function, history_len, n_samples) -> tuple[list, list]:
     """
     Tworzymy próbki składające się z historii jakiejś funkcji (tu sin(x)), oraz z kolejnego punktu tej funkcji.
     Zadanie sieci neuronowej to przewidzieć kolejną wartość tej funkcji
@@ -20,4 +21,4 @@ def gen_samples(n_samples, history_len, model_function, x_from, x_to, dx) -> tup
 
 
 if __name__ == '__main__':
-    print(gen_samples(10, 3, model_sinus, 0, 0.2, 0.01))
+    print(gen_samples(0, 4, 0.1, model_sinus, 4, 3))
