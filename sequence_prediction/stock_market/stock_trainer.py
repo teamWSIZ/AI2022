@@ -11,8 +11,8 @@ dtype = torch.double
 device = 'cpu'  # gdzie wykonywać obliczenia
 # device = 'cuda'
 
-HISTORY_N = 100  # ile liczb wchodzi (długość listy -- historii na podstawie której przewidujemy)
-HID = 10  # ile neuronów w warstwie ukrytej
+HISTORY_N = 40  # ile liczb wchodzi (długość listy -- historii na podstawie której przewidujemy)
+HID = 20  # ile neuronów w warstwie ukrytej
 
 N_SAMPLE = 20000  # liczba próbek treningowych
 BATCH_SIZE = 2500  # liczba próbek losowych
@@ -90,6 +90,9 @@ def predict(date_from: datetime, date_to: datetime, history_len, horizon, n_samp
     net = net.double()
     net.load(saved_filename)
 
+    if device == 'cuda':
+        net = net.cuda()
+
     histories, next_values = get_samples(date_from, date_to, history_len + horizon, n_samples, ticker)
 
     history = histories[0][:history_len]
@@ -118,11 +121,11 @@ def predict(date_from: datetime, date_to: datetime, history_len, horizon, n_samp
 
 
 if __name__ == '__main__':
-    train_start = datetime(2007, 1, 1)
+    train_start = datetime(2002, 1, 1)
     train_end = datetime(2020, 1, 1)
     pred_start = datetime(2020, 1, 1)
     pred_end = datetime(2022, 5, 1)
 
     # train(train_start, train_end, HISTORY_N, N_SAMPLE, 'EURPLN=X', False, 'save.dat', LR, device)
-
+    #
     predict(pred_start, pred_end, HISTORY_N, 30, 1, 'EURPLN=X', 'save.dat')

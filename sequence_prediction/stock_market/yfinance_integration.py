@@ -11,9 +11,9 @@ pip install yfinance
 import yfinance as yf
 
 end = datetime.now()
-start = datetime(end.year, end.month-2, end.day)
+start = datetime(end.year-20, end.month-2, end.day)
 
-g = yf.download('CHFPLN=X', start, end)  # S&P500: ^GSPC, DAX: ^GDAXI, EURUSD=X, EURPLN=X
+g = yf.download('EURPLN=X', start, end)  # S&P500: ^GSPC, DAX: ^GDAXI, EURUSD=X, EURPLN=X
 print(type(g))
 print(g)
 print(g['Close'])

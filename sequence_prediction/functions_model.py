@@ -46,11 +46,11 @@ class SequenceNet(nn.Module):
 
 
 if __name__ == '__main__':
-    x = -10
+    x = -20
     dx = 0.1
     vals = []
-    while x < 10:
-        vals.append(model_tanh(x))
+    while x < 20:
+        vals.append(model_lorentz(x))
         x += dx
 
     import matplotlib.pyplot as plt

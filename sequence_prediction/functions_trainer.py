@@ -2,7 +2,7 @@ import torch
 from torch import nn, optim, tensor, Tensor
 
 from podstawy.helpers import format_list
-from sequence_prediction.functions_model import SequenceNet, model_sinus, model_tanh
+from sequence_prediction.functions_model import SequenceNet, model_sinus, model_tanh, model_lorentz
 from sequence_prediction.sample_generator import gen_samples
 
 dtype = torch.double
@@ -122,8 +122,8 @@ def predict(x_from, x_to, dx, model_function, history_len, hidden_neurons, saved
 
 
 if __name__ == '__main__':
-    train(x_from=-10, x_to=10, dx=DX, model_function=model_tanh, history_len=HISTORY_N, hidden_neurons=HID,
-          load_net=False, save_filename='save.dat', learning_rate=LR, device=device)
+    # train(x_from=2, x_to=8, dx=DX, model_function=model_lorentz, history_len=HISTORY_N, hidden_neurons=HID,
+    #       load_net=True, save_filename='save.dat', learning_rate=LR, device=device)
 
-    predict(x_from=-10, x_to=40, dx=DX, model_function=model_tanh, history_len=HISTORY_N, hidden_neurons=HID,
+    predict(x_from=10, x_to=11, dx=DX, model_function=model_sinus, history_len=HISTORY_N, hidden_neurons=HID,
             saved_filename='save.dat')
