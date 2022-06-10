@@ -2,7 +2,7 @@ import torch
 from torch import nn, optim, tensor, Tensor
 
 from podstawy.helpers import format_list
-from sequence_prediction.functions_model import SequenceNet, model_sinus, model_tanh, model_lorentz
+from sequence_prediction.functions_model import *
 from sequence_prediction.lstm_predictor import LSTM_Predictor
 from sequence_prediction.sample_generator import gen_samples
 
@@ -10,8 +10,8 @@ dtype = torch.double
 device = 'cpu'  # gdzie wykonywać obliczenia
 # device = 'cuda'
 
-HISTORY_N = 40  # ile liczb wchodzi (długość listy -- historii na podstawie której przewidujemy)
-HID = 10  # ile neuronów w warstwie ukrytej
+HISTORY_N = 100  # ile liczb wchodzi (długość listy -- historii na podstawie której przewidujemy)
+HID = 30  # rozmiar wyjścia z LSTM1, i wejścia do LSTM2 ~~ilość pamięci LSTM'ów
 
 N_SAMPLE = 1000
 BATCH_SIZE = 250
@@ -19,7 +19,7 @@ EPOCHS = 100
 LR = 0.01
 
 # Dane do uczenia sieci
-DX = 0.05
+DX = 0.5  # HISTORY_N = 60 oznacza przedział HISTORY_N * DX
 
 
 def generate_sample_tensors(x_from, x_to, dx, model_function, history_len, n_samples) -> tuple[Tensor, Tensor]:
@@ -43,6 +43,8 @@ def split_to_batches(samples: Tensor, outputs: Tensor, batch_size) -> tuple[list
 
 def train(x_from, x_to, dx, model_function, history_len, hidden_neurons, load_net: bool, save_filename: str,
           learning_rate: float, device: str):
+    print(
+        f'training the model on interval: [{x_from},{x_to}]; history: {history_len} → interval of length: {history_len * dx}')
     # Create net, or load from a saved checkpoint
     net = LSTM_Predictor(hidden_neurons, device)
     net = net.double()
@@ -89,7 +91,10 @@ def train(x_from, x_to, dx, model_function, history_len, hidden_neurons, load_ne
     print('net saved')
 
 
-def predict(x_from, x_to, dx, model_function, hidden_neurons, saved_filename, device):
+def predict(x_from, x_to, dx, history_len, model_function, hidden_neurons, saved_filename, device):
+    print(f'predicting series for interval: [{x_from},{x_to}]; '
+          f'history: {history_len} → interval of length: {history_len * dx}')
+
     net = LSTM_Predictor(hidden_neurons, device)
     net = net.double()
     if saved_filename != '':
@@ -97,8 +102,8 @@ def predict(x_from, x_to, dx, model_function, hidden_neurons, saved_filename, de
     if device == 'cuda':
         net = net.cuda()
 
-
     history = [model_function(x_from + i * dx) for i in range(HISTORY_N)]  # początkowa historia
+    xx = [x_from + i * dx for i in range(HISTORY_N)]
 
     model_values = history.copy()
     predi_values = history.copy()
@@ -112,6 +117,7 @@ def predict(x_from, x_to, dx, model_function, hidden_neurons, saved_filename, de
 
         predi_values.append(val)
         model_values.append(model_function(x))
+        xx.append(x)
 
         history.append(val)
         history = history[1:]
@@ -119,15 +125,22 @@ def predict(x_from, x_to, dx, model_function, hidden_neurons, saved_filename, de
 
     import matplotlib.pyplot as plt
     # plt.plot(history, linestyle='solid')
-    plt.plot(predi_values, linestyle='dotted')
-    plt.plot(model_values, linestyle='solid')
+    plt.plot(xx, predi_values, linestyle='dotted')
+    plt.plot(xx, model_values, linestyle='solid')
 
     plt.show()
 
 
 if __name__ == '__main__':
-    train(x_from=0, x_to=7, dx=DX, model_function=model_sinus, history_len=HISTORY_N, hidden_neurons=HID,
-          load_net=True, save_filename='save.dat', learning_rate=LR, device=device)
+    # model = model_sinus
+    peaks = []
+    for i in range(10):
+        peaks.extend([(0.5, i * 40), (1, i * 40 + 5)])
+    model = ModelMultiPeak(peaks)  # "cardiogram"
 
-    predict(x_from=0, x_to=40, dx=DX, model_function=model_sinus, hidden_neurons=HID,
+    # for i in range(100):
+    #     train(x_from=-20, x_to=200, dx=DX, model_function=model, history_len=HISTORY_N, hidden_neurons=HID,
+    #           load_net=True, save_filename='save.dat', learning_rate=LR, device=device)
+
+    predict(x_from=67, x_to=200, dx=DX, history_len=HISTORY_N, model_function=model, hidden_neurons=HID,
             saved_filename='save.dat', device=device)

@@ -22,7 +22,8 @@ class LSTM_Predictor(nn.Module):
         self.linear = nn.Linear(self.n_hidden, 1)
 
     def forward(self, x: Tensor, future=0):
-        # x : (batch_size, input_size)
+        # x : (batch_size, input_size==HISTORY_N)
+        # print(x.size())
 
         # dont do future prediction per default
         outputs = []
@@ -35,7 +36,8 @@ class LSTM_Predictor(nn.Module):
         c_t2 = zeros(n_samples, self.n_hidden, dtype=torch.double, device=self.device)  # initial cell state for lstm2
 
         output = None
-        for in_t in x.split(1, dim=1):
+        for in_t in x.split(split_size=1, dim=1):
+            # cut a given input into pieces of size "1" -- show them to LSTM1 input 1 by 1
             # (batch_size, 1)
             # print(f'in_t.size={in_t.size()}')   # (2500, 1)
             h_t, c_t = self.lstm1(in_t, (h_t, c_t))  # recursion: privide states, (hidden,cell) → new (hidden,cell)
@@ -45,11 +47,11 @@ class LSTM_Predictor(nn.Module):
         outputs.append(output)
 
         # default: unused
-        for i in range(future):
-            h_t, c_t = self.lstm1(output, (h_t, c_t))
-            h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
-            output = self.linear(h_t2)
-            outputs.append(output)
+        # for i in range(future):
+        #     h_t, c_t = self.lstm1(output, (h_t, c_t))
+        #     h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
+        #     output = self.linear(h_t2)
+        #     outputs.append(output)
 
         outputs = torch.cat(outputs, dim=1)
         return outputs

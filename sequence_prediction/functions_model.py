@@ -16,6 +16,28 @@ def model_tanh(x):
     return 1 + tanh(x * 0.2)
 
 
+class ModelMultiPeak:
+    peaks = []
+
+    """
+    Initialize this class with locations of lorentzian peaks (each peak[0] is scale, peak[1] is location), 
+    eg. m = ModelMultiPeak([(1,0),(1,5)])    # has similar peaks at x=0 and x=5, 
+    then call it via m(15)
+    """
+
+    def __init__(self, peaks) -> None:
+        self.peaks = peaks
+
+    def __call__(self, *args, **kwargs):
+        x = args[0]
+        val = 0
+        for peak in self.peaks:
+            val += peak[0] / (1 + (x - peak[1])**2)
+        return val
+
+
+
+
 class SequenceNet(nn.Module):
     """
         Simple NN: input(sz) ---> flat(hid) ---> 1
@@ -49,11 +71,18 @@ if __name__ == '__main__':
     x = -20
     dx = 0.1
     vals = []
-    while x < 20:
-        vals.append(model_lorentz(x))
+    xx = []
+    peaks = []
+    for i in range(10):
+        peaks.extend([(0.5, i*40), (1,i*40+5)])
+    model = ModelMultiPeak(peaks)    # "cardiogram"
+    while x < 200:
+        vals.append(model(x))
+        xx.append(x)
         x += dx
 
     import matplotlib.pyplot as plt
-    plt.plot(vals, linestyle='solid')
+
+    plt.plot(xx, vals, linestyle='solid')
 
     plt.show()
