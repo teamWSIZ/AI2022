@@ -3,20 +3,22 @@ from torch import nn, optim, tensor, Tensor
 
 from podstawy.helpers import format_list
 from sequence_prediction.functions_model import *
+from sequence_prediction.lstm_deep_predictor import LSTM_DeepPredictor
 from sequence_prediction.lstm_predictor import LSTM_Predictor
 from sequence_prediction.sample_generator import gen_samples
 
 dtype = torch.double
-device = 'cpu'  # gdzie wykonywać obliczenia
-# device = 'cuda'
+# device = 'cpu'  # gdzie wykonywać obliczenia
+device = 'cuda'
 
-HISTORY_N = 100  # ile liczb wchodzi (długość listy -- historii na podstawie której przewidujemy)
-HID = 30  # rozmiar wyjścia z LSTM1, i wejścia do LSTM2 ~~ilość pamięci LSTM'ów
+HISTORY_N = 200  # ile liczb wchodzi (długość listy -- historii na podstawie której przewidujemy)
+HID = 15  # rozmiar wyjścia z LSTM ~~ilość pamięci LSTM'ów
+N_LAYERS = 4   # liczba wasrstw LSTM'ów
 
 N_SAMPLE = 1000
 BATCH_SIZE = 250
 EPOCHS = 100
-LR = 0.01
+LR = 0.1
 
 # Dane do uczenia sieci
 DX = 0.5  # HISTORY_N = 60 oznacza przedział HISTORY_N * DX
@@ -46,7 +48,9 @@ def train(x_from, x_to, dx, model_function, history_len, hidden_neurons, load_ne
     print(
         f'training the model on interval: [{x_from},{x_to}]; history: {history_len} → interval of length: {history_len * dx}')
     # Create net, or load from a saved checkpoint
-    net = LSTM_Predictor(hidden_neurons, device)
+    # net = LSTM_Predictor(hidden_neurons, device)
+    net = LSTM_DeepPredictor(n_history=history_len, n_features=1, n_hidden=hidden_neurons, n_layers=N_LAYERS,
+                             device=device)
     net = net.double()
     if load_net:
         net.load(save_filename)
@@ -56,7 +60,6 @@ def train(x_from, x_to, dx, model_function, history_len, hidden_neurons, load_ne
     # Training setup
     loss_function = nn.MSELoss(reduction='mean')
     optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=0.9)
-    # optimizer = optim.LBFGS(net.parameters(), lr=learning_rate)
 
     samples, outputs = generate_sample_tensors(x_from, x_to, dx, model_function, HISTORY_N, N_SAMPLE)
     b_sample, b_output = split_to_batches(samples, outputs, BATCH_SIZE)
@@ -64,6 +67,7 @@ def train(x_from, x_to, dx, model_function, history_len, hidden_neurons, load_ne
     # Training
     for epoch in range(EPOCHS):
         total_loss = 0
+        net.train()
 
         # for LBFGS
         # def closure():
@@ -76,9 +80,11 @@ def train(x_from, x_to, dx, model_function, history_len, hidden_neurons, load_ne
         # optimizer.step(closure)
 
         for (batch_s, batch_o) in zip(b_sample, b_output):
+            # print(batch_s.size(), batch_o.size())  # (1,100), (1)
             optimizer.zero_grad()
             prediction = net(batch_s)
             prediction = prediction.view(-1)  # size: [5,1] -> [5] (flat, same as b_out)
+            # print(prediction.size())    #(1)
             loss = loss_function(prediction, batch_o)
 
             total_loss += loss
@@ -95,7 +101,10 @@ def predict(x_from, x_to, dx, history_len, model_function, hidden_neurons, saved
     print(f'predicting series for interval: [{x_from},{x_to}]; '
           f'history: {history_len} → interval of length: {history_len * dx}')
 
-    net = LSTM_Predictor(hidden_neurons, device)
+    # net = LSTM_Predictor(hidden_neurons, device)
+    net = LSTM_DeepPredictor(n_history=history_len, n_features=1, n_hidden=hidden_neurons, n_layers=N_LAYERS,
+                             device=device)
+
     net = net.double()
     if saved_filename != '':
         net.load(saved_filename)
@@ -138,9 +147,10 @@ if __name__ == '__main__':
         peaks.extend([(0.5, i * 40), (1, i * 40 + 5)])
     model = ModelMultiPeak(peaks)  # "cardiogram"
 
-    # for i in range(100):
+    # for i in range(200):
+    #     print(f'iteration {i}')
     #     train(x_from=-20, x_to=200, dx=DX, model_function=model, history_len=HISTORY_N, hidden_neurons=HID,
     #           load_net=True, save_filename='save.dat', learning_rate=LR, device=device)
 
-    predict(x_from=67, x_to=200, dx=DX, history_len=HISTORY_N, model_function=model, hidden_neurons=HID,
+    predict(x_from=-15, x_to=200, dx=DX, history_len=HISTORY_N, model_function=model, hidden_neurons=HID,
             saved_filename='save.dat', device=device)

@@ -40,7 +40,7 @@ class LSTM_Predictor(nn.Module):
             # cut a given input into pieces of size "1" -- show them to LSTM1 input 1 by 1
             # (batch_size, 1)
             # print(f'in_t.size={in_t.size()}')   # (2500, 1)
-            h_t, c_t = self.lstm1(in_t, (h_t, c_t))  # recursion: privide states, (hidden,cell) → new (hidden,cell)
+            h_t, c_t = self.lstm1(in_t, (h_t, c_t))  # recursion: input + (hidden,cell) → new (hidden,cell)
             h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
             output = self.linear(h_t2)
         # print(f'output.size={output.size()}')
