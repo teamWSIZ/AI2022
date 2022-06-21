@@ -11,9 +11,9 @@ dtype = torch.double
 # device = 'cpu'  # gdzie wykonywać obliczenia
 device = 'cuda'
 
-HISTORY_N = 200  # ile liczb wchodzi (długość listy -- historii na podstawie której przewidujemy)
+HISTORY_N = 400  # ile liczb wchodzi (długość listy -- historii na podstawie której przewidujemy)
 HID = 15  # rozmiar wyjścia z LSTM ~~ilość pamięci LSTM'ów
-N_LAYERS = 4   # liczba wasrstw LSTM'ów
+N_LAYERS = 3   # liczba wasrstw LSTM'ów
 
 N_SAMPLE = 1000
 BATCH_SIZE = 250
@@ -68,16 +68,6 @@ def train(x_from, x_to, dx, model_function, history_len, hidden_neurons, load_ne
     for epoch in range(EPOCHS):
         total_loss = 0
         net.train()
-
-        # for LBFGS
-        # def closure():
-        #     optimizer.zero_grad()
-        #     out = net(train_input)
-        #     loss = loss_function(out, train_target)
-        #     print('loss', loss.item())
-        #     loss.backward()
-        #     return loss
-        # optimizer.step(closure)
 
         for (batch_s, batch_o) in zip(b_sample, b_output):
             # print(batch_s.size(), batch_o.size())  # (1,100), (1)
@@ -143,14 +133,14 @@ def predict(x_from, x_to, dx, history_len, model_function, hidden_neurons, saved
 if __name__ == '__main__':
     # model = model_sinus
     peaks = []
-    for i in range(10):
+    for i in range(15):
         peaks.extend([(0.5, i * 40), (1, i * 40 + 5)])
     model = ModelMultiPeak(peaks)  # "cardiogram"
 
-    # for i in range(200):
-    #     print(f'iteration {i}')
-    #     train(x_from=-20, x_to=200, dx=DX, model_function=model, history_len=HISTORY_N, hidden_neurons=HID,
-    #           load_net=True, save_filename='save.dat', learning_rate=LR, device=device)
+    for i in range(5):
+        print(f'iteration {i}')
+        train(x_from=-20, x_to=400, dx=DX, model_function=model, history_len=HISTORY_N, hidden_neurons=HID,
+              load_net=True, save_filename='save.dat', learning_rate=LR, device=device)
 
-    predict(x_from=-15, x_to=200, dx=DX, history_len=HISTORY_N, model_function=model, hidden_neurons=HID,
+    predict(x_from=-5, x_to=400, dx=DX, history_len=HISTORY_N, model_function=model, hidden_neurons=HID,
             saved_filename='save.dat', device=device)

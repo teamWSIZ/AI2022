@@ -28,7 +28,7 @@ class LSTM_DeepPredictor(nn.Module):
         outputs = []
 
         # initial hidden + cell state for lstm
-        # size for initial cell state is (num_layers, 1, input_size)
+        # size for initial cell state is (num_layers, batch_size, input_size)
         h_t = zeros((self.n_layers, batch_size, self.n_hidden), dtype=torch.double, device=self.device)
         c_t = zeros((self.n_layers, batch_size, self.n_hidden), dtype=torch.double, device=self.device)
 
