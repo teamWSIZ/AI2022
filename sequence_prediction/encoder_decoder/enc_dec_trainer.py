@@ -5,16 +5,16 @@ from torch import tensor, nn, functional as F, optim
 import torch
 import matplotlib.pyplot as plt
 
-ALPHABET = 500
+ALPHABET = 500  # ile mamy tokenów... czyli w przypadku tekstów: ile różnych słów dopuszczamy...
 SAMPLES = 20000
-ENCODED_SIZE = 14  # tyle liczb typu "float" pozostaje po zakodowaniu danego znaku
+ENCODED_SIZE = 5  # tyle liczb typu "float" pozostaje po zakodowaniu danego znaku
 
 BATCH_SIZE = 1500
-EPOCHS = 200
-LR = 0.01
+EPOCHS = 600
+LR = 0.03
 
 # Model
-net = EncoderDecoderModule(ALPHABET, ninp=14)
+net = EncoderDecoderModule(ALPHABET, ninp=ENCODED_SIZE)
 
 
 # net.load('enc_dec.dat')

@@ -2,9 +2,9 @@ SPECIAL = '-.,;…:()!!„”?'
 
 
 def create_language_dict(filename: str):
-    d = dict()
+    dictionary = dict()  # 'string' → int
     for c in SPECIAL:
-        d[c] = len(d)
+        dictionary[c] = len(dictionary)
     with open(filename) as f:
         lines = f.readlines()
         for line in lines:
@@ -15,9 +15,9 @@ def create_language_dict(filename: str):
                     w = w[:-1]
                 while len(w) > 0 and w[0] in SPECIAL:
                     w = w[1:]
-                if w not in d.keys():
-                    d[w] = len(d)
-    return d
+                if w not in dictionary.keys():
+                    dictionary[w] = len(dictionary)
+    return dictionary
 
 
 def convert_to_tokens(tekst: str, d):
@@ -34,5 +34,5 @@ def convert_to_tokens(tekst: str, d):
 if __name__ == '__main__':
     dct = create_language_dict('lalka-tom-pierwszy.txt')
     for k in dct.keys():
-        print(k)
-    print(convert_to_tokens('natrętne kwiaciarki otyłej matki', dct))
+        print(k, '←→', dct[k])
+    print(convert_to_tokens('natrętne kwiaciarki otyłej matki że matki pierwszy', dct))

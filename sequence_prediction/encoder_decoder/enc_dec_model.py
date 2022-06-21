@@ -11,8 +11,10 @@ class EncoderDecoderModule(nn.Module):
 
     def __init__(self, ntoken, ninp):
         super(EncoderDecoderModule, self).__init__()
-        self.encoder = nn.Embedding(num_embeddings=ntoken, embedding_dim=ninp)
-        self.decoder = nn.Linear(ninp, ntoken)
+        self.encoder = nn.Embedding(num_embeddings=ntoken, embedding_dim=ninp)  # input =[128], albo input = [314]
+        # - - -
+        self.decoder = nn.Linear(ninp, ntoken)  # output = [0.13,0.11,0.001,0.75,...] (ntoken liczb)
+
         self.ntoken = ntoken
 
         self.init_weights()
