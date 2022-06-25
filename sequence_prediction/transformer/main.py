@@ -122,7 +122,7 @@ def repackage_hidden(h):
         return tuple(repackage_hidden(v) for v in h)
 
 
-# get_batch subdivides the source data into chunks of length args.bptt.
+# get_batch subdivides the source data into chunks of length args.bptt (==sequence length).
 # If source is equal to the example output of the batchify function, with
 # a bptt-limit of 2, we'd get the following two Variables for i = 0:
 # ┌ a g m s ┐ ┌ b h n t ┐
@@ -133,9 +133,12 @@ def repackage_hidden(h):
 # to the seq_len dimension in the LSTM.
 
 def get_batch(source, i):
+    # `i` == start_position
+
     seq_len = min(args.bptt, len(source) - 1 - i)
-    data = source[i:i + seq_len]
-    target = source[i + 1:i + 1 + seq_len].view(-1)  # todo: 1 position further than data
+    data = source[i:i + seq_len]  # todo: (bptt, batch_size)
+    target = source[i + 1:i + 1 + seq_len].view(-1)  # todo: 1 position further than data;
+    #  ↑↑ flattened → (bptt * batch_size)
     return data, target
 
 
@@ -167,10 +170,13 @@ def train():
     ntokens = len(corpus.dictionary)
     if args.model != 'Transformer':
         hidden = model.init_hidden(args.batch_size)
-    for batch, i in enumerate(range(0, train_data.size(0) - 1, args.bptt)):
-        data, targets = get_batch(train_data, i)
+    for batch, i in enumerate(range(0, train_data.size(0) - 1, args.bptt)):  # bptt = sequence length
+        # batch = id of the batch; i = position of start of sequence
+        data, targets = get_batch(source=train_data, i=i)
+
         # Starting each batch, we detach the hidden state from how it was previously produced.
         # If we didn't, the model would try backpropagating all the way to start of the dataset.
+
         model.zero_grad()
         if args.model == 'Transformer':
             output = model(data)
@@ -217,8 +223,8 @@ best_val_loss = None
 try:
     for epoch in range(1, args.epochs + 1):
         epoch_start_time = time.time()
-        train()
-        val_loss = evaluate(val_data)
+        train()  # uses train.txt
+        val_loss = evaluate(val_data)  # valid.txt used for val_loss estimation
         print('-' * 89)
         print('| end of epoch {:3d} | time: {:5.2f}s | valid loss {:5.2f} | '
               'valid ppl {:8.2f}'.format(epoch, (time.time() - epoch_start_time),

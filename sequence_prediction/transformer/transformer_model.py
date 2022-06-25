@@ -153,4 +153,11 @@ class TransformerModel(nn.Module):
         src = self.pos_encoder(src)
         output = self.transformer_encoder(src, self.src_mask)
         output = self.decoder(output)
-        return F.log_softmax(output, dim=-1)    # todo: why log_softmax, and not softmax; how is this trained
+        return F.softmax(output, dim=-1)    # todo: why log_softmax, and not softmax; how is this trained
+
+    def load(self, filename):
+        self.load_state_dict(torch.load(filename))
+        self.eval()
+
+    def save(self, filename):
+        torch.save(self.state_dict(), filename)
