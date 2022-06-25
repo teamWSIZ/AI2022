@@ -5,19 +5,19 @@ from torch import tensor, nn, functional as F, optim
 import torch
 import matplotlib.pyplot as plt
 
-ALPHABET = 500  # ile mamy tokenów... czyli w przypadku tekstów: ile różnych słów dopuszczamy...
+ALPHABET = 300  # ile mamy tokenów... czyli w przypadku tekstów: ile różnych słów dopuszczamy...
 SAMPLES = 20000
-ENCODED_SIZE = 5  # tyle liczb typu "float" pozostaje po zakodowaniu danego znaku
+ENCODED_SIZE = 4  # tyle liczb typu "float" pozostaje po zakodowaniu danego znaku
 
 BATCH_SIZE = 1500
-EPOCHS = 600
-LR = 0.03
+EPOCHS = 20
+LR = 0.01
 
 # Model
 net = EncoderDecoderModule(ALPHABET, ninp=ENCODED_SIZE)
 
 
-# net.load('enc_dec.dat')
+net.load('enc_dec.dat')
 
 
 def get_batches():
@@ -104,11 +104,11 @@ xt = torch.tensor(x)
 xt_ = net(xt)
 good = 0
 for i in range(len(x)):
-    ans = torch.argmax(transform_to_01(xt)[i]).item()
-    cor = torch.argmax(xt_[i]).item()
-    print('answer:  ', ans)
-    print('correct: ', cor)
-    if ans == cor: good += 1
+    correct = torch.argmax(transform_to_01(xt)[i]).item()
+    result = torch.argmax(xt_[i]).item()
+    print('correct: ', correct)
+    print('result : ', result)
+    if correct == result: good += 1
     print('---')
 print(f'in total: {100. * good / len(x) : .1f}% correct')
 
