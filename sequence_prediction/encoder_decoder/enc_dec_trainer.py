@@ -5,19 +5,19 @@ from torch import tensor, nn, functional as F, optim
 import torch
 import matplotlib.pyplot as plt
 
-ALPHABET = 300  # ile mamy tokenów... czyli w przypadku tekstów: ile różnych słów dopuszczamy...
-SAMPLES = 20000
-ENCODED_SIZE = 4  # tyle liczb typu "float" pozostaje po zakodowaniu danego znaku
+ALPHABET = 1000  # ile mamy tokenów... czyli w przypadku tekstów: ile różnych słów dopuszczamy...
+SAMPLES = 10000
+ENCODED_SIZE = 10  # tyle liczb typu "float" pozostaje po zakodowaniu danego znaku
 
 BATCH_SIZE = 1500
 EPOCHS = 20
-LR = 0.01
+LR = 0.1
 
 # Model
 net = EncoderDecoderModule(ALPHABET, ninp=ENCODED_SIZE)
 
 
-net.load('enc_dec.dat')
+# net.load('enc_dec.dat')
 
 
 def get_batches():
@@ -86,7 +86,7 @@ for epoch in range(EPOCHS):
         optimizer.step()
 
     # Dodatkowe operacje w trakcie procesu uczenia
-    if epoch % 20 == 0:
+    if epoch % 4 == 0:
         print(f' epoch:{epoch}, loss:{total_loss:.6f}')
         epo_.append(epoch)
         err_.append(total_loss.item())
@@ -106,10 +106,12 @@ good = 0
 for i in range(len(x)):
     correct = torch.argmax(transform_to_01(xt)[i]).item()
     result = torch.argmax(xt_[i]).item()
-    print('correct: ', correct)
-    print('result : ', result)
+    print('.', end='')
+    # print('correct: ', correct)
+    # print('result : ', result)
     if correct == result: good += 1
-    print('---')
+    # print('---')
+    if i%50==0: print(i, end='')
 print(f'in total: {100. * good / len(x) : .1f}% correct')
 
 # Optional result save

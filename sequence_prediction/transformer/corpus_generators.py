@@ -42,7 +42,7 @@ def get_periodic_samples(length=10000, dist=3) -> list[int]:
 
 
 def get_periodic(length=1000, alphabet=10) -> list[int]:
-    data = [i % alphabet for i in range(length)]
+    data = [i % alphabet for i in range(length)]  # 012340123401234
     return data
 
 

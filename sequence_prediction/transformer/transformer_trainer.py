@@ -7,16 +7,16 @@ from corpus_generators import *
 
 from transformer_model import TransformerModel
 
-ALPHABET = 10  # ile mamy tokenów... czyli w przypadku tekstów: ile różnych słów dopuszczamy...
+ALPHABET = 30  # ile mamy tokenów... czyli w przypadku tekstów: ile różnych słów dopuszczamy...
 SAMPLES = 2000
 LEN = 2000
 
-ENCODED_SIZE = 10  # tyle liczb typu "float" pozostaje po zakodowaniu danego znaku
-BPTT = 60  # size of each sequence fed to net
+ENCODED_SIZE = 30  # tyle liczb typu "float" pozostaje po zakodowaniu danego znaku
+BPTT = 60  #todo: size of each sequence fed to net, "history length"
 
 BATCH_SIZE = 100
-EPOCHS = 50
-LR = 0.01
+EPOCHS = 5
+LR = 0.001
 # ADAM = False
 ADAM = True
 
@@ -44,7 +44,7 @@ def get_batches(n_samples) -> tuple[tensor, tensor]:
     # data = get_journey(LEN, max_distance=20)
     # data = get_periodic(length=LEN, alphabet=ALPHABET)
     # data = get_small_samples(length=LEN)
-    data = get_periodic_samples(length=LEN, dist=26)
+    data = get_periodic_samples(length=LEN, dist=10)
 
     # print('example data:', data[:BPTT * 2])
     starts = [randint(0, LEN - BPTT - 1) for _ in range(n_samples)]
@@ -141,7 +141,7 @@ def predict(steps=100):
     for _ in range(steps):
         input_ = torch.transpose(history, 0, 1)  # (sample, batch) → token
         nxt = net(input_)  # szukamy predykcji następnej wartości → (sample, batch) → probabilities
-        # get token of highest probability;
+        # get token with the highest probability;
         tokens = torch.argmax(nxt, dim=2)  # (sample,batch) –> token
         token = tokens[-1, 0]   # last generated = generated with full knowledge of history
         # cat
@@ -153,7 +153,7 @@ def predict(steps=100):
 
 
 if __name__ == '__main__':
-    LOAD = False
-    # LOAD = True
+    # LOAD = False
+    LOAD = True
     for i in range(1): train()
     predict()
