@@ -20,8 +20,8 @@ LR = 0.001
 # ADAM = False
 ADAM = True
 
-device = torch.device('cuda')
-# device = torch.device('cpu')
+# device = torch.device('cuda')
+device = torch.device('cpu')
 
 
 ###############################################################################
