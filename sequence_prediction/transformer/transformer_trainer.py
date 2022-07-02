@@ -12,16 +12,16 @@ SAMPLES = 2000
 LEN = 2000
 
 ENCODED_SIZE = 30  # tyle liczb typu "float" pozostaje po zakodowaniu danego znaku
-BPTT = 60  #todo: size of each sequence fed to net, "history length"
+BPTT = 40  # todo: size of each sequence fed to net, "history length"
 
 BATCH_SIZE = 100
-EPOCHS = 5
+EPOCHS = 25
 LR = 0.001
 # ADAM = False
 ADAM = True
 
-# device = torch.device('cuda')
-device = torch.device('cpu')
+device = torch.device('cuda')
+# device = torch.device('cpu')
 
 
 ###############################################################################
@@ -35,16 +35,14 @@ def create_net(load=True):
     return net
 
 
-
-
 def get_batches(n_samples) -> tuple[tensor, tensor]:
     """
     :return: Tuple[Tensor]; each of size = (batch, sample, _internalrepresentation_)
     """
-    # data = get_journey(LEN, max_distance=20)
+    data = get_journey(length=LEN, max_distance=20)
     # data = get_periodic(length=LEN, alphabet=ALPHABET)
     # data = get_small_samples(length=LEN)
-    data = get_periodic_samples(length=LEN, dist=10)
+    # data = get_periodic_samples(length=LEN, dist=20)
 
     # print('example data:', data[:BPTT * 2])
     starts = [randint(0, LEN - BPTT - 1) for _ in range(n_samples)]
@@ -120,7 +118,7 @@ def train():
                 f' epoch:{epoch}, time/epoch: {en - st:.1f}s, loss (~ %errors):{100 * 3 / 2 * total_loss / elems:.6f}')
             # assume 1 error → 0.666
             epo_.append(epoch)
-            err_.append(100*3/2*total_loss.item()/elems)
+            err_.append(100 * 3 / 2 * total_loss.item() / elems)
 
     # # Optional result save
     net.save('transf_save.dat')
@@ -143,9 +141,9 @@ def predict(steps=100):
         nxt = net(input_)  # szukamy predykcji następnej wartości → (sample, batch) → probabilities
         # get token with the highest probability;
         tokens = torch.argmax(nxt, dim=2)  # (sample,batch) –> token
-        token = tokens[-1, 0]   # last generated = generated with full knowledge of history
+        token = tokens[-1, 0]  # last generated = generated with full knowledge of history
         # cat
-        token_t = tensor([[token]], dtype=torch.int)
+        token_t = tensor([[token]], dtype=torch.int, device=device)
         history = torch.cat((history, token_t), dim=1)
         full = torch.cat((full, token_t), dim=1)
         history = history[:, 1:]
@@ -156,4 +154,4 @@ if __name__ == '__main__':
     # LOAD = False
     LOAD = True
     for i in range(1): train()
-    predict()
+    predict(steps=100)

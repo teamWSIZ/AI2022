@@ -10,9 +10,9 @@ def get_journey(length=10000, max_distance=40) -> list[int]:
     while at + 1 < length:
         journey[at] = 1
         journey[at + 1] = station
-        # station = 2 if station == 3 else 3
-        # at += randint(3, max_distance)
-        at += 10
+        station = 2 if station == 3 else 3
+        at += randint(3, max_distance)
+        # at += max_distance
     return journey
 
 
@@ -47,4 +47,4 @@ def get_periodic(length=1000, alphabet=10) -> list[int]:
 
 
 if __name__ == '__main__':
-    print(get_journey(500))
+    print(get_journey(40))
