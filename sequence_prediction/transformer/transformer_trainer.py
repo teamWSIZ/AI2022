@@ -15,13 +15,13 @@ ENCODED_SIZE = 30  # tyle liczb typu "float" pozostaje po zakodowaniu danego zna
 BPTT = 40  # todo: size of each sequence fed to net, "history length"
 
 BATCH_SIZE = 100
-EPOCHS = 25
+EPOCHS = 10
 LR = 0.001
 # ADAM = False
 ADAM = True
 
-# device = torch.device('cuda')
-device = torch.device('cpu')
+device = torch.device('cuda')
+# device = torch.device('cpu')
 
 
 ###############################################################################
@@ -43,6 +43,7 @@ def get_batches(n_samples) -> tuple[tensor, tensor]:
     # data = get_periodic(length=LEN, alphabet=ALPHABET)
     # data = get_small_samples(length=LEN)
     # data = get_periodic_samples(length=LEN, dist=20)
+    data = get_caps_nocaps_text(length=LEN, caps=LEN // 5)
 
     # print('example data:', data[:BPTT * 2])
     starts = [randint(0, LEN - BPTT - 1) for _ in range(n_samples)]
@@ -154,4 +155,4 @@ if __name__ == '__main__':
     # LOAD = False
     LOAD = True
     for i in range(1): train()
-    predict(steps=100)
+    predict(steps=200)

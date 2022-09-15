@@ -46,5 +46,37 @@ def get_periodic(length=1000, alphabet=10) -> list[int]:
     return data
 
 
+def get_caps_nocaps_text(length=30, caps=10):
+    """
+    Znaki alfabetu:
+    abc -- zwykłe litery        0,1,2
+    ABC -- litery "duże"        10,11,12
+    ↑ -- włączenie caps lock    5
+    ↓ -- wyłączenie caps lock   6
+
+    Alfabet 0...39
+    """
+    w = []
+    for i in range(length):
+        w.append(randint(0, 2))
+    for i in range(caps):
+        pos = randint(0, length - 1)
+        w[pos] = 5
+    w = use_caps(w)
+    return w
+
+
+def use_caps(w: list[int]) -> list[int]:
+    is_caps = False
+    res = []
+    for c in w:
+        if c == 5:
+            res.append(6 if is_caps else 5)
+            is_caps = not is_caps
+        else:
+            res.append(c + 10 if is_caps else c)
+    return res
+
+
 if __name__ == '__main__':
-    print(get_journey(40))
+    print(get_caps_nocaps_text(50, 10))
